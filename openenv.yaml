@@ -1,0 +1,50 @@
+name: customer-support-triage
+version: "1.0.0"
+description: >
+  A real-world environment where AI agents learn to triage, categorize,
+  prioritize, and resolve customer support tickets across a SaaS platform.
+  Agents must handle escalations, compose responses, and manage ticket queues
+  under realistic constraints like SLA deadlines, sentiment detection, and
+  multi-turn resolution chains.
+author: OpenEnv Contributor
+tags:
+  - customer-support
+  - nlp
+  - triage
+  - real-world
+  - text
+tasks:
+  - id: ticket_classification
+    name: Ticket Classification & Routing
+    difficulty: easy
+    description: >
+      Classify incoming support tickets by category (billing, technical,
+      account, feature-request, abuse) and assign correct priority level
+      (P1-critical, P2-high, P3-medium, P4-low). Score is based on accuracy
+      of both classification and priority assignment.
+  - id: response_drafting
+    name: Response Drafting & Quality
+    difficulty: medium
+    description: >
+      Given a classified ticket with context (user history, product docs,
+      previous thread), draft a complete customer-facing resolution response.
+      Graded on factual accuracy, tone, resolution completeness, and
+      adherence to company voice guidelines.
+  - id: queue_management
+    name: SLA Queue Management
+    difficulty: hard
+    description: >
+      Manage a live queue of 20 tickets across 3 agents. Assign, reassign,
+      escalate, and close tickets to maximize SLA compliance. Penalized for
+      breached SLAs, wrong escalations, and agent overload. Rewarded for
+      first-contact resolution rate and customer satisfaction score.
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  tasks: GET /tasks
+  grader: POST /grader
+  baseline: POST /baseline
+observation_schema: app.models.Observation
+action_schema: app.models.Action
+reward_schema: app.models.Reward

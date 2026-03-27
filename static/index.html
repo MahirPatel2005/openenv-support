@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Customer Support Triage — OpenEnv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: #2a2a40;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --text-dim: #7878a0;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --radius: 12px;
+    --glow: 0 0 24px rgba(108,99,255,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 1px;
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent3);
+  }
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    background: var(--accent3);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── Main content ── */
+  .main {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 0;
+    height: calc(100vh - 77px);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .sidebar-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .task-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .task-card:hover, .task-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+    box-shadow: var(--glow);
+  }
+
+  .task-card.active::before { opacity: 1; }
+
+  .task-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-easy { background: rgba(67,233,123,0.15); color: var(--accent3); }
+  .badge-medium { background: rgba(247,151,30,0.15); color: var(--accent4); }
+  .badge-hard { background: rgba(255,101,132,0.15); color: var(--accent2); }
+
+  .score-ring {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* ── Center panel ── */
+  .center {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .center-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .center-title {
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #7c74ff; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  .btn-danger {
+    background: rgba(255,101,132,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,101,132,0.3);
+  }
+
+  .btn-success {
+    background: rgba(67,233,123,0.15);
+    color: var(--accent3);
+    border: 1px solid rgba(67,233,123,0.3);
+  }
+
+  .center-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* ── Ticket display ── */
+  .ticket-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ticket-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+
+  .ticket-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .ticket-subject {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .ticket-tier {
+    flex-shrink: 0;
+  }
+
+  .tier-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+
+  .tier-enterprise { background: rgba(108,99,255,0.2); color: var(--accent); border: 1px solid rgba(108,99,255,0.3); }
+  .tier-pro { background: rgba(247,151,30,0.15); color: var(--accent4); border: 1px solid rgba(247,151,30,0.3); }
+  .tier-free { background: rgba(120,120,160,0.15); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .ticket-body {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #c0c0d8;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .ticket-meta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .sentiment-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .sentiment-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .sentiment-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .sentiment-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── KB articles ── */
+  .kb-section { margin-top: 20px; }
+
+  .kb-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .kb-article {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+
+  .kb-article-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .kb-article-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  .kb-article-content {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ── Action form ── */
+  .action-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 16px;
+  }
+
+  .form-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .form-select, .form-textarea, .form-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .form-select:focus, .form-textarea:focus, .form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .form-textarea {
+    font-family: var(--sans);
+    font-size: 14px;
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+  }
+
+  .submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  /* ── Right panel ── */
+  .right-panel {
+    border-left: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Score display ── */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .score-card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .big-score {
+    font-family: var(--mono);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .score-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(42,42,64,0.5);
+  }
+
+  .breakdown-row:last-child { border-bottom: none; }
+
+  .breakdown-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .breakdown-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .val-good { color: var(--accent3); }
+  .val-mid { color: var(--accent4); }
+  .val-bad { color: var(--accent2); }
+
+  /* ── Reward history chart ── */
+  .mini-chart {
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding-top: 8px;
+  }
+
+  .bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    min-height: 4px;
+    transition: height 0.3s ease;
+  }
+
+  /* ── Queue list ── */
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .queue-item:hover { border-color: var(--accent); }
+
+  .priority-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .p1 { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .p2 { background: var(--accent4); }
+  .p3 { background: var(--accent3); }
+  .p4 { background: var(--text-dim); }
+
+  .queue-subject {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  .queue-sla {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .sla-breached { color: var(--accent2); }
+  .sla-warning { color: var(--accent4); }
+  .sla-ok { color: var(--accent3); }
+
+  /* ── Agent cards ── */
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .agent-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .load-bar-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .load-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    transition: width 0.4s ease;
+  }
+
+  .load-bar-fill.overloaded { background: linear-gradient(90deg, var(--accent4), var(--accent2)); }
+
+  /* ── Log ── */
+  .log-entry {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    background: var(--surface);
+  }
+
+  .log-reward-pos { color: var(--accent3); }
+  .log-reward-neg { color: var(--accent2); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-dim);
+    text-align: center;
+    gap: 12px;
+  }
+
+  .empty-icon { font-size: 48px; opacity: 0.3; }
+  .empty-text { font-size: 14px; }
+
+  /* ── Episode done ── */
+  .episode-done {
+    background: linear-gradient(135deg, var(--surface2), rgba(108,99,255,0.08));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    animation: slideIn 0.4s ease;
+  }
+
+  .done-icon { font-size: 48px; margin-bottom: 16px; }
+  .done-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .done-score { font-family: var(--mono); font-size: 64px; font-weight: 700; color: var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🎫</div>
+      <div>
+        <div class="logo-text">Support Triage</div>
+        <div class="logo-sub">OPENENV ENVIRONMENT</div>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="pulse"></div>
+      <span id="server-status">LIVE</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-section-label">Tasks</div>
+        <div class="task-card active" id="task-classification" onclick="selectTask('ticket_classification')">
+          <div class="task-name">Ticket Classification</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Classify tickets by category & priority</div>
+          <div class="task-meta">
+            <span class="badge badge-easy">EASY</span>
+            <span class="score-ring" id="score-classification">—</span>
+          </div>
+        </div>
+        <div class="task-card" id="task-drafting" onclick="selectTask('response_drafting')" style="margin-top:8px;">
+          <div class="task-name">Response Drafting</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Write customer-facing responses</div>
+          <div class="task-meta">
+            <span class="badge badge-medium">MEDIUM</span>
+            <span class="score-ring" id="score-drafting">—</span>
+          </div>
+        </div>
+        <div class="task-card" id="task-queue" onclick="selectTask('queue_management')" style="margin-top:8px;">
+          <div class="task-name">Queue Management</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Manage 20 tickets across 3 agents</div>
+          <div class="task-meta">
+            <span class="badge badge-hard">HARD</span>
+            <span class="score-ring" id="score-queue">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-label">Episode Log</div>
+        <div id="log-container" style="max-height:250px;overflow-y:auto;"></div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-label">Links</div>
+        <a href="/docs" target="_blank" style="display:flex;align-items:center;gap:8px;color:var(--accent);font-size:13px;text-decoration:none;padding:8px;background:var(--surface);border-radius:8px;border:1px solid var(--border);">
+          <span>📖</span> API Docs (Swagger)
+        </a>
+        <a href="/tasks" target="_blank" style="display:flex;align-items:center;gap:8px;color:var(--text-dim);font-size:13px;text-decoration:none;padding:8px;background:var(--surface);border-radius:8px;border:1px solid var(--border);margin-top:6px;">
+          <span>📋</span> /tasks endpoint
+        </a>
+      </div>
+    </aside>
+
+    <!-- Center -->
+    <main class="center">
+      <div class="center-header">
+        <div>
+          <div class="center-title" id="center-title">Ticket Classification</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-top:4px;" id="center-subtitle">
+            Step <span id="step-counter">0</span> / <span id="max-steps">10</span>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-secondary" onclick="runBaseline()">▶ Heuristic Baseline</button>
+          <button class="btn btn-primary" onclick="resetEpisode()">↺ Reset Episode</button>
+        </div>
+      </div>
+
+      <div class="center-body" id="center-body">
+        <div class="empty-state">
+          <div class="empty-icon">🎫</div>
+          <div class="empty-text">Click "Reset Episode" to start a new episode</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right panel -->
+    <aside class="right-panel">
+      <div>
+        <div class="sidebar-section-label">Current Score</div>
+        <div class="score-card">
+          <div class="score-card-title">EPISODE SCORE</div>
+          <div class="big-score" id="current-score" style="color:var(--accent)">—</div>
+          <div class="score-label" id="score-status">No active episode</div>
+
+          <div style="margin-top:16px;" id="score-breakdown"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-label">Reward History</div>
+        <div class="score-card">
+          <div class="mini-chart" id="reward-chart"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">
+            <span>+1.0</span><span>avg: <span id="avg-reward">—</span></span><span>-1.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="agents-section" style="display:none;">
+        <div class="sidebar-section-label">Agent Status</div>
+        <div id="agents-container"></div>
+      </div>
+
+      <div id="queue-section" style="display:none;">
+        <div class="sidebar-section-label">Ticket Queue</div>
+        <div id="queue-container"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const API = '';
+let currentTaskId = 'ticket_classification';
+let currentObs = null;
+let rewardHistory = [];
+let episodeScore = null;
+
+const TASK_CONFIG = {
+  ticket_classification: { title: 'Ticket Classification', maxSteps: 10 },
+  response_drafting: { title: 'Response Drafting', maxSteps: 6 },
+  queue_management: { title: 'Queue Management', maxSteps: 40 },
+};
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function selectTask(taskId) {
+  currentTaskId = taskId;
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('task-' + taskId.split('_')[0]).classList.add('active');
+  // Handle 'classification' vs 'ticket_classification'
+  const map = { ticket_classification: 'classification', response_drafting: 'drafting', queue_management: 'queue' };
+  document.getElementById('task-' + map[taskId]).classList.add('active');
+
+  const cfg = TASK_CONFIG[taskId];
+  document.getElementById('center-title').textContent = cfg.title;
+  document.getElementById('max-steps').textContent = cfg.maxSteps;
+  document.getElementById('center-body').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">🎫</div>
+      <div class="empty-text">Click "Reset Episode" to start with this task</div>
+    </div>`;
+  rewardHistory = [];
+  updateRewardChart();
+  document.getElementById('current-score').textContent = '—';
+  document.getElementById('score-status').textContent = 'No active episode';
+  document.getElementById('score-breakdown').innerHTML = '';
+  document.getElementById('agents-section').style.display = 'none';
+  document.getElementById('queue-section').style.display = 'none';
+}
+
+// Fix task card click handlers
+document.getElementById('task-classification').onclick = () => selectTask('ticket_classification');
+document.getElementById('task-drafting').onclick = () => selectTask('response_drafting');
+document.getElementById('task-queue').onclick = () => selectTask('queue_management');
+
+async function resetEpisode() {
+  rewardHistory = [];
+  episodeScore = null;
+  document.getElementById('log-container').innerHTML = '';
+
+  try {
+    const data = await api('POST', `/reset?task_id=${currentTaskId}`);
+    currentObs = data.observation;
+    document.getElementById('step-counter').textContent = currentObs.step || 0;
+    renderObservation(currentObs);
+    addLog(`⟳ Episode reset — task: ${currentTaskId}`, 'info');
+    updateAgents(currentObs.agents);
+    updateQueue(currentObs.ticket_queue, currentObs.sla_status);
+  } catch(e) {
+    addLog(`❌ Reset failed: ${e.message}`, 'error');
+  }
+}
+
+function renderObservation(obs) {
+  if (obs.episode_done) {
+    fetchAndShowGrader();
+    return;
+  }
+
+  const body = document.getElementById('center-body');
+
+  if (currentTaskId === 'ticket_classification') {
+    renderClassificationView(obs, body);
+  } else if (currentTaskId === 'response_drafting') {
+    renderDraftingView(obs, body);
+  } else {
+    renderQueueView(obs, body);
+  }
+
+  updateAgents(obs.agents);
+  updateQueue(obs.ticket_queue, obs.sla_status);
+}
+
+function renderTicketHTML(ticket) {
+  if (!ticket) return '';
+  const sentiment = ticket.sentiment_score || 0;
+  const sentPct = ((sentiment + 1) / 2 * 100).toFixed(0);
+  const sentColor = sentiment < -0.3 ? 'var(--accent2)' : sentiment > 0.3 ? 'var(--accent3)' : 'var(--accent4)';
+
+  return `
+    <div class="ticket-card">
+      <div class="ticket-header">
+        <div>
+          <div class="ticket-id">${ticket.ticket_id}</div>
+          <div class="ticket-subject">${ticket.subject}</div>
+        </div>
+        <div class="ticket-tier">
+          <span class="tier-badge tier-${ticket.customer_tier}">${ticket.customer_tier.toUpperCase()}</span>
+        </div>
+      </div>
+      <div class="ticket-body">${ticket.body}</div>
+      <div class="ticket-meta-row">
+        ${ticket.category ? `<span class="meta-chip">📁 ${ticket.category}</span>` : ''}
+        ${ticket.priority ? `<span class="meta-chip">🔺 ${ticket.priority}</span>` : ''}
+        ${ticket.status ? `<span class="meta-chip">📌 ${ticket.status}</span>` : ''}
+        <span class="meta-chip">🕐 SLA: ${ticket.sla_deadline ? new Date(ticket.sla_deadline).toLocaleTimeString() : '—'}</span>
+      </div>
+      <div class="sentiment-bar">
+        <span class="sentiment-label">SENTIMENT</span>
+        <div class="sentiment-track">
+          <div class="sentiment-fill" style="width:${sentPct}%;background:${sentColor}"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);width:40px;text-align:right">${sentiment.toFixed(2)}</span>
+      </div>
+    </div>`;
+}
+
+function renderKBHTML(articles) {
+  if (!articles || !articles.length) return '';
+  return `
+    <div class="kb-section">
+      <div class="kb-label">Knowledge Base</div>
+      ${articles.map(a => `
+        <div class="kb-article">
+          <div class="kb-article-title">
+            <span class="kb-article-id">${a.article_id}</span>
+            ${a.title}
+          </div>
+          <div class="kb-article-content">${a.content}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderClassificationView(obs, body) {
+  const ticket = obs.current_ticket;
+  body.innerHTML = renderTicketHTML(ticket) + `
+    <div class="action-form">
+      <div class="form-title">⚡ Classify Ticket</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="f-category">
+            <option value="">-- Select --</option>
+            ${['billing','technical','account','feature_request','abuse','unknown'].map(c =>
+              `<option value="${c}">${c.replace('_',' ').toUpperCase()}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="f-priority">
+            <option value="">-- Select --</option>
+            ${['P1','P2','P3','P4'].map(p =>
+              `<option value="${p}">${p} — ${{'P1':'Critical','P2':'High','P3':'Medium','P4':'Low'}[p]}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">Reasoning (optional)</label>
+        <input class="form-input" id="f-reasoning" placeholder="Why did you choose this category/priority?"/>
+      </div>
+      <div class="submit-row">
+        <button class="btn btn-primary" onclick="submitClassify('${ticket?.ticket_id}')">Submit Classification →</button>
+      </div>
+    </div>`;
+}
+
+function renderDraftingView(obs, body) {
+  const ticket = obs.current_ticket;
+  body.innerHTML = renderTicketHTML(ticket) + renderKBHTML(obs.knowledge_base) + `
+    <div class="action-form">
+      <div class="form-title">✍️ Draft Response</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">Customer Response</label>
+        <textarea class="form-textarea" id="f-response" rows="8" style="min-height:200px;"
+          placeholder="Write a professional, empathetic response that addresses the customer's issue with concrete next steps..."></textarea>
+      </div>
+      <div class="submit-row">
+        <button class="btn btn-primary" onclick="submitDraft('${ticket?.ticket_id}')">Send Response →</button>
+      </div>
+    </div>`;
+}
+
+function renderQueueView(obs, body) {
+  const queue = obs.ticket_queue || [];
+  const info = obs.info || {};
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div class="score-card" style="text-align:center;">
+        <div class="score-card-title">OPEN</div>
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--accent)">${info.open_count ?? queue.length}</div>
+      </div>
+      <div class="score-card" style="text-align:center;">
+        <div class="score-card-title">RESOLVED</div>
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--accent3)">${info.resolved ?? 0}</div>
+      </div>
+      <div class="score-card" style="text-align:center;">
+        <div class="score-card-title">SLA BREACHES</div>
+        <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--accent2)">${info.sla_breaches ?? 0}</div>
+      </div>
+    </div>
+    <div class="action-form">
+      <div class="form-title">⚙️ Queue Action</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ticket ID</label>
+          <select class="form-select" id="f-ticket-id">
+            <option value="">-- Select Ticket --</option>
+            ${queue.map(t => `<option value="${t.ticket_id}">${t.ticket_id} | ${t.priority || '?'} | ${t.subject.substring(0,40)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Action Type</label>
+          <select class="form-select" id="f-action-type" onchange="toggleQueueFields()">
+            ${['assign_ticket','escalate','resolve','close','no_op'].map(a =>
+              `<option value="${a}">${a.replace('_',' ').toUpperCase()}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div id="agent-row" class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">Assign To Agent</label>
+        <select class="form-select" id="f-agent-id">
+          <option value="agent_billing">agent_billing — Jordan (Billing)</option>
+          <option value="agent_tech">agent_tech — Sam (Technical)</option>
+          <option value="agent_general">agent_general — Alex (General)</option>
+        </select>
+      </div>
+      <div class="submit-row">
+        <button class="btn btn-primary" onclick="submitQueueAction()">Execute Action →</button>
+      </div>
+    </div>`;
+}
+
+function toggleQueueFields() {
+  const action = document.getElementById('f-action-type')?.value;
+  const agentRow = document.getElementById('agent-row');
+  if (agentRow) {
+    agentRow.style.display = ['assign_ticket', 'escalate'].includes(action) ? 'flex' : 'none';
+  }
+}
+
+async function submitClassify(ticketId) {
+  const category = document.getElementById('f-category').value;
+  const priority = document.getElementById('f-priority').value;
+  const reasoning = document.getElementById('f-reasoning').value;
+
+  if (!category || !priority) { alert('Please select both category and priority.'); return; }
+
+  await submitAction({
+    action_type: 'classify',
+    ticket_id: ticketId,
+    category,
+    priority,
+    reasoning,
+  });
+}
+
+async function submitDraft(ticketId) {
+  const response_text = document.getElementById('f-response').value;
+  if (!response_text.trim()) { alert('Please write a response.'); return; }
+
+  await submitAction({
+    action_type: 'draft_response',
+    ticket_id: ticketId,
+    response_text,
+  });
+}
+
+async function submitQueueAction() {
+  const action_type = document.getElementById('f-action-type').value;
+  const ticket_id = document.getElementById('f-ticket-id')?.value;
+  const target_agent_id = document.getElementById('f-agent-id')?.value;
+
+  await submitAction({ action_type, ticket_id, target_agent_id });
+}
+
+async function submitAction(actionBody) {
+  try {
+    const data = await api('POST', `/step?task_id=${currentTaskId}`, actionBody);
+    currentObs = data.observation;
+    const reward = data.reward;
+
+    rewardHistory.push(reward.total);
+    document.getElementById('step-counter').textContent = currentObs.step || rewardHistory.length;
+
+    const sign = reward.total >= 0 ? '+' : '';
+    addLog(`Step ${rewardHistory.length}: ${sign}${reward.total.toFixed(3)} reward`, reward.total >= 0 ? 'pos' : 'neg');
+
+    updateRewardChart();
+    updateScoreDisplay(reward);
+    renderObservation(currentObs);
+
+    if (data.done) {
+      fetchAndShowGrader();
+    }
+  } catch(e) {
+    addLog(`❌ Action failed: ${e.message}`, 'error');
+  }
+}
+
+async function fetchAndShowGrader() {
+  try {
+    const result = await api('POST', `/grader?task_id=${currentTaskId}`);
+    showEpisodeDone(result);
+    const scoreKey = { ticket_classification: 'classification', response_drafting: 'drafting', queue_management: 'queue' }[currentTaskId];
+    document.getElementById(`score-${scoreKey}`).textContent = result.final_score.toFixed(3);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function showEpisodeDone(result) {
+  const passed = result.passed;
+  const score = result.final_score;
+  const color = score >= 0.7 ? 'var(--accent3)' : score >= 0.4 ? 'var(--accent4)' : 'var(--accent2)';
+  const emoji = score >= 0.7 ? '🏆' : score >= 0.4 ? '📊' : '📉';
+
+  document.getElementById('center-body').innerHTML = `
+    <div class="episode-done">
+      <div class="done-icon">${emoji}</div>
+      <div class="done-title">Episode Complete</div>
+      <div class="done-score" style="color:${color}">${score.toFixed(4)}</div>
+      <div style="font-family:var(--mono);font-size:14px;color:var(--text-dim);margin:8px 0 24px">
+        ${passed ? '✓ PASSED' : '✗ DID NOT PASS'} &nbsp;|&nbsp; ${rewardHistory.length} steps
+      </div>
+      <div style="text-align:left;max-width:400px;margin:0 auto;">
+        ${Object.entries(result.metrics || {}).filter(([k]) => typeof result.metrics[k] === 'number').map(([k,v]) => `
+          <div class="breakdown-row">
+            <span class="breakdown-label">${k.replace(/_/g,' ')}</span>
+            <span class="breakdown-val ${v >= 0.7 ? 'val-good' : v >= 0.4 ? 'val-mid' : 'val-bad'}">${typeof v === 'number' ? v.toFixed(4) : v}</span>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-primary" style="margin-top:24px;" onclick="resetEpisode()">↺ New Episode</button>
+    </div>`;
+
+  document.getElementById('current-score').textContent = score.toFixed(4);
+  document.getElementById('current-score').style.color = color;
+  document.getElementById('score-status').textContent = passed ? '✓ Passed' : '✗ Did not pass';
+}
+
+function updateScoreDisplay(reward) {
+  const total = reward.total;
+  const color = total >= 0.6 ? 'var(--accent3)' : total >= 0.2 ? 'var(--accent4)' : 'var(--accent2)';
+  document.getElementById('current-score').textContent = total.toFixed(4);
+  document.getElementById('current-score').style.color = color;
+  document.getElementById('score-status').textContent = `Step reward`;
+
+  const bd = reward.breakdown || {};
+  document.getElementById('score-breakdown').innerHTML = Object.entries(bd).map(([k,v]) => `
+    <div class="breakdown-row">
+      <span class="breakdown-label">${k.replace(/_/g,' ')}</span>
+      <span class="breakdown-val ${v >= 0.6 ? 'val-good' : v < 0 ? 'val-bad' : 'val-mid'}">${typeof v === 'number' ? v.toFixed(3) : v}</span>
+    </div>`).join('');
+}
+
+function updateRewardChart() {
+  const container = document.getElementById('reward-chart');
+  if (!rewardHistory.length) { container.innerHTML = ''; return; }
+
+  const avg = (rewardHistory.reduce((a,b) => a+b, 0) / rewardHistory.length).toFixed(3);
+  document.getElementById('avg-reward').textContent = avg;
+
+  container.innerHTML = rewardHistory.map(r => {
+    const pct = ((r + 1) / 2 * 100).toFixed(1);
+    const color = r >= 0.3 ? 'var(--accent3)' : r >= 0 ? 'var(--accent4)' : 'var(--accent2)';
+    return `<div class="bar" style="height:${pct}%;background:${color};opacity:0.8;"></div>`;
+  }).join('');
+}
+
+function updateAgents(agents) {
+  if (!agents || !agents.length) {
+    document.getElementById('agents-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('agents-section').style.display = 'block';
+  document.getElementById('agents-container').innerHTML = agents.map(a => {
+    const pct = (a.current_load / a.max_load * 100).toFixed(0);
+    const overloaded = a.current_load >= a.max_load;
+    return `
+      <div class="agent-card">
+        <div class="agent-name">${a.name}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">
+          Load: ${a.current_load}/${a.max_load} &nbsp;|&nbsp; ${a.specialization.join(', ')}
+        </div>
+        <div class="load-bar-track">
+          <div class="load-bar-fill ${overloaded ? 'overloaded' : ''}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateQueue(queue, slaStatus) {
+  if (!queue || !queue.length) {
+    document.getElementById('queue-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('queue-section').style.display = 'block';
+  document.getElementById('queue-container').innerHTML = queue.slice(0,8).map(t => {
+    const sla = (slaStatus || {})[t.ticket_id] || 'ok';
+    const p = (t.priority || 'P3').toLowerCase().replace('_critical','').replace('_high','').replace('_medium','').replace('_low','');
+    return `
+      <div class="queue-item">
+        <div class="priority-dot ${p}"></div>
+        <span class="queue-subject">${t.subject}</span>
+        <span class="queue-sla sla-${sla}">${sla.toUpperCase()}</span>
+      </div>`;
+  }).join('');
+}
+
+function addLog(message, type) {
+  const container = document.getElementById('log-container');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type === 'pos' ? 'log-reward-pos' : type === 'neg' ? 'log-reward-neg' : ''}`;
+  div.textContent = message;
+  container.insertBefore(div, container.firstChild);
+  if (container.children.length > 30) container.removeChild(container.lastChild);
+}
+
+async function runBaseline() {
+  addLog('⚡ Running heuristic baseline...', 'info');
+  try {
+    const data = await api('POST', '/baseline');
+    const tasks = data.tasks;
+    Object.entries(tasks).forEach(([tid, result]) => {
+      const map = { ticket_classification: 'classification', response_drafting: 'drafting', queue_management: 'queue' };
+      if (map[tid]) {
+        document.getElementById(`score-${map[tid]}`).textContent = result.final_score.toFixed(3);
+      }
+      addLog(`${tid}: ${result.final_score.toFixed(4)} ${result.passed ? '✓' : '✗'}`, result.final_score > 0.5 ? 'pos' : 'neg');
+    });
+    addLog(`Overall: ${data.overall_score.toFixed(4)}`, data.overall_score > 0.5 ? 'pos' : 'neg');
+  } catch(e) {
+    addLog(`Baseline error: ${e.message}`, 'neg');
+  }
+}
+
+// Check server health on load
+(async () => {
+  try {
+    await api('GET', '/health');
+    document.getElementById('server-status').textContent = 'LIVE';
+  } catch(e) {
+    document.getElementById('server-status').textContent = 'OFFLINE';
+    document.getElementById('server-status').style.color = 'var(--accent2)';
+  }
+})();
+</script>
+</body>
+</html>
