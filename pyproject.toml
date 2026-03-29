@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-support"
+version = "2.0.0"
+description = "Multi-Domain AI Agent Evaluation Environment"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenEnv Contributor" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi>=0.115.6",
+    "uvicorn[standard]>=0.32.1",
+    "pydantic>=2.10.3",
+    "httpx>=0.28.1",
+    "openai>=1.58.1",
+    "python-multipart>=0.0.20",
+    "pyyaml>=6.0.2",
+    "datasets>=2.21.0",
+    "huggingface-hub>=0.24.0",
+    "sentence-transformers>=3.1.1"
+]
