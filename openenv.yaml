@@ -1,43 +1,73 @@
-name: customer-support-triage
-version: "1.0.0"
+name: multi-domain-ai-agent-environment
+version: "2.0.0"
 description: >
-  A real-world environment where AI agents learn to triage, categorize,
-  prioritize, and resolve customer support tickets across a SaaS platform.
-  Agents must handle escalations, compose responses, and manage ticket queues
-  under realistic constraints like SLA deadlines, sentiment detection, and
-  multi-turn resolution chains.
+  A real-world OpenEnv environment testing AI agents across four professional
+  domains: Customer Support Triage, Legal Document Review, Clinical Patient
+  Triage, and Software Engineering PR Review. Each domain contains 3 tasks
+  progressing from easy classification to hard open-ended generation.
 author: OpenEnv Contributor
 tags:
   - customer-support
+  - legal
+  - clinical
+  - engineering
   - nlp
-  - triage
+  - multi-domain
   - real-world
-  - text
+  - triage
 tasks:
   - id: ticket_classification
     name: Ticket Classification & Routing
     difficulty: easy
-    description: >
-      Classify incoming support tickets by category (billing, technical,
-      account, feature-request, abuse) and assign correct priority level
-      (P1-critical, P2-high, P3-medium, P4-low). Score is based on accuracy
-      of both classification and priority assignment.
+    domain: customer_support
   - id: response_drafting
     name: Response Drafting & Quality
     difficulty: medium
-    description: >
-      Given a classified ticket with context (user history, product docs,
-      previous thread), draft a complete customer-facing resolution response.
-      Graded on factual accuracy, tone, resolution completeness, and
-      adherence to company voice guidelines.
+    domain: customer_support
   - id: queue_management
     name: SLA Queue Management
     difficulty: hard
-    description: >
-      Manage a live queue of 20 tickets across 3 agents. Assign, reassign,
-      escalate, and close tickets to maximize SLA compliance. Penalized for
-      breached SLAs, wrong escalations, and agent overload. Rewarded for
-      first-contact resolution rate and customer satisfaction score.
+    domain: customer_support
+  - id: multi_turn_conversation
+    name: Multi-Turn De-escalation
+    difficulty: very_hard
+    domain: customer_support
+  - id: legal_clause_identification
+    name: Legal Clause Identification
+    difficulty: easy
+    domain: legal
+  - id: legal_risk_flagging
+    name: Legal Risk Flagging
+    difficulty: medium
+    domain: legal
+  - id: legal_clause_redlining
+    name: Legal Clause Redlining
+    difficulty: hard
+    domain: legal
+  - id: clinical_triage_classification
+    name: Clinical Triage Body System
+    difficulty: easy
+    domain: clinical
+  - id: clinical_esi_assignment
+    name: Clinical ESI Assignment
+    difficulty: medium
+    domain: clinical
+  - id: clinical_triage_note
+    name: Clinical Triage Note Generation
+    difficulty: hard
+    domain: clinical
+  - id: pr_type_classification
+    name: PR Type Classification
+    difficulty: easy
+    domain: engineering
+  - id: pr_bug_identification
+    name: PR Bug Identification
+    difficulty: medium
+    domain: engineering
+  - id: pr_review_comment
+    name: PR Code Review
+    difficulty: hard
+    domain: engineering
 endpoints:
   reset: POST /reset
   step: POST /step

@@ -24,6 +24,43 @@ WEIGHTS = {
     "no_hallucination": 0.10,   # No false promises or invented info
 }
 
+_ST_MODEL = None
+def get_st_model():
+    global _ST_MODEL
+    if _ST_MODEL is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            _ST_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+        except ImportError:
+            _ST_MODEL = None  # Graceful fallback
+    return _ST_MODEL
+
+def semantic_kb_score(response, items):
+    """Semantic similarity score with keyword fallback if sentence_transformers unavailable."""
+    if not items:
+        return 0.0
+    model = get_st_model()
+    if model is None:
+        # Fallback: keyword overlap
+        response_words = set(response.lower().split())
+        best = 0.0
+        for item in items:
+            item_words = set(item.lower().split())
+            overlap = len(response_words & item_words) / max(len(item_words) * 0.2, 1)
+            best = max(best, min(overlap, 1.0))
+        return best
+    try:
+        from sentence_transformers import util
+        emb1 = model.encode(response)
+        best_score = 0.0
+        for item in items:
+            emb2 = model.encode(item)
+            score = float(util.cos_sim(emb1, emb2))
+            best_score = max(best_score, score)
+        return max(0.0, min(1.0, best_score))
+    except Exception:
+        return 0.0
+
 # Keywords that indicate KB usage per category
 KB_SIGNALS = {
     TicketCategory.BILLING: ["refund", "business day", "stripe", "payment", "invoice"],
@@ -162,10 +199,12 @@ class ResponseDraftingTask:
         breakdown = {}
         penalty = 0.0
 
-        # 1. KB reference — does response use KB signals?
-        signals = KB_SIGNALS.get(ticket.category, [])
-        kb_hits = sum(1 for s in signals if s in text)
-        kb_score = min(kb_hits / max(len(signals), 1), 1.0)
+        # 1. KB reference — does response semantically match KB articles?
+        kb_articles = get_relevant_articles(ticket.category, top_k=2) if ticket.category else []
+        if kb_articles:
+            kb_score = semantic_kb_score(text, [a.content for a in kb_articles])
+        else:
+            kb_score = 0.0
         breakdown["kb_reference"] = round(kb_score, 3)
 
         # 2. Addresses the issue — does it mention key terms from the ticket?

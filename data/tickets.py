@@ -180,11 +180,85 @@ TICKET_POOL: List[dict] = [
     },
 ]
 
+try:
+    from datasets import load_dataset
+    import random
+
+    # Map bitext intents to real TicketCategory values
+    _BITEXT_CATEGORY_MAP = {
+        "cancel_order": TicketCategory.BILLING,
+        "change_order": TicketCategory.BILLING,
+        "check_invoice": TicketCategory.BILLING,
+        "check_cancellation_fee": TicketCategory.BILLING,
+        "get_invoice": TicketCategory.BILLING,
+        "get_refund": TicketCategory.BILLING,
+        "payment_issue": TicketCategory.BILLING,
+        "refund_request": TicketCategory.BILLING,
+        "track_order": TicketCategory.BILLING,
+        "track_refund": TicketCategory.BILLING,
+        "change_shipping": TicketCategory.ACCOUNT,
+        "contact_customer_service": TicketCategory.ACCOUNT,
+        "contact_human_agent": TicketCategory.ACCOUNT,
+        "create_account": TicketCategory.ACCOUNT,
+        "delete_account": TicketCategory.ACCOUNT,
+        "edit_account": TicketCategory.ACCOUNT,
+        "place_order": TicketCategory.ACCOUNT,
+        "recover_password": TicketCategory.ACCOUNT,
+        "registration_problems": TicketCategory.TECHNICAL,
+        "set_up_shipping": TicketCategory.ACCOUNT,
+        "switch_account": TicketCategory.ACCOUNT,
+        "delivery_period": TicketCategory.ACCOUNT,
+        "complaint": TicketCategory.TECHNICAL,
+        "delivery_options": TicketCategory.FEATURE_REQUEST,
+        "newsletter_subscription": TicketCategory.FEATURE_REQUEST,
+        "review": TicketCategory.FEATURE_REQUEST,
+    }
+
+    _BITEXT_DS = list(load_dataset(
+        "bitext/Bitext-customer-support-llm-chatbot-training-dataset",
+        split="train", streaming=True
+    ).take(50))
+
+    for row in _BITEXT_DS:
+        intent = row.get("intent", "").lower().strip()
+        category = _BITEXT_CATEGORY_MAP.get(intent, TicketCategory.ACCOUNT)
+        TICKET_POOL.append({
+            "subject": intent.replace("_", " ").title(),
+            "body": row.get("instruction", "I need help with my account."),
+            "customer_tier": "free",
+            "category": category,
+            "priority": TicketPriority.P3_MEDIUM,
+            "sentiment_score": 0.0,
+            "tags": ["hf-dataset"],
+        })
+except Exception:
+    pass
+
+DIFFICULTY_VARIANTS = {
+    "ambiguous": "I have a problem with my account or maybe billing not sure. ",
+    "angry": "THIS IS ABSOLUTELY UNACCEPTABLE I WANT MY MONEY BACK NOW!!! ",
+    "vague": "It's not working properly but anyway: ",
+    "multilingual": "Hola, tengo un problema. ",
+    "multi_issue": "Billing is wrong AND I can't login AND the app crashes. Also: ",
+}
 
 def generate_ticket(override: dict = None) -> Ticket:
     base = random.choice(TICKET_POOL).copy()
     if override:
         base.update(override)
+
+    # Inject combinatorial difficulty permutations to generate practically infinite variants
+    if random.random() < 0.6:  # 60% chance to modify the ticket
+        variant = random.choice(list(DIFFICULTY_VARIANTS.keys()))
+        prefix = DIFFICULTY_VARIANTS[variant]
+        
+        if variant == "angry":
+            base["subject"] = base["subject"].upper() + "!!!"
+            base["sentiment_score"] = -1.0
+        elif variant == "multilingual":
+            base["subject"] = "Ayuda: " + base["subject"]
+            
+        base["body"] = prefix + base["body"]
 
     tid = f"TKT-{uuid.uuid4().hex[:8].upper()}"
     cid = f"CUST-{random.randint(10000, 99999)}"

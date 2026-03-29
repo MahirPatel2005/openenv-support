@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEnv | Multi-Domain AI Benchmark</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --panel-bg: rgba(25, 28, 41, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --secondary: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: radial-gradient(circle at top right, #2e1065 0%, #0f111a 40%),
+                        radial-gradient(circle at bottom left, #1e3a8a 0%, #0f111a 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #c084fc, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px -12px rgba(139, 92, 246, 0.2);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .panel-header::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Leaderboard */
+        .col-leaderboard {
+            grid-column: span 4;
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border: 1px solid transparent;
+            transition: background 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .leaderboard-item.highlight {
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .lb-rank {
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 24px;
+        }
+        
+        .highlight .lb-rank { color: var(--primary); }
+
+        .lb-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+
+        .lb-score {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Radar Chart */
+        .col-radar {
+            grid-column: span 4;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 1s ease-out 0.2s both;
+        }
+
+        .chart-container {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+        }
+
+        /* Domains */
+        .col-domains {
+            grid-column: span 4;
+            animation: slideInRight 0.8s ease-out 0.4s both;
+        }
+
+        .domain-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .domain-tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .domain-tag:hover {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--text-main);
+            border-color: var(--primary);
+        }
+
+        /* Replay Viewer */
+        .col-replay {
+            grid-column: span 12;
+            margin-top: 1rem;
+            animation: slideUp 0.8s ease-out 0.6s both;
+        }
+
+        .replay-timeline {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .timeline-step {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid var(--panel-border);
+            transition: all 0.2s;
+        }
+
+        .timeline-step:hover, .timeline-step.active {
+            background: var(--primary);
+            color: white;
+            border-color: transparent;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .replay-console {
+            background: #000;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: monospace;
+            color: #a3be8c;
+            line-height: 1.6;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-agent { color: #88c0d0; }
+        .log-env { color: #d08770; }
+        
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(8, 1fr); }
+            .col-leaderboard { grid-column: span 8; }
+            .col-radar { grid-column: span 4; }
+            .col-domains { grid-column: span 4; }
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .col-radar, .col-domains { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">OpenEnv</div>
+        <div class="nav-links">
+            <a href="/docs" target="_blank">API Docs</a>
+            <a href="https://github.com/MahirPatelCG" target="_blank">GitHub</a>
+        </div>
+    </header>
+
+    <div class="hero">
+        <h1>The Multi-Domain Reasoning Benchmark</h1>
+        <p>Evaluating state-of-the-art LLMs against dynamic, adversarial real-world data pipelines across Support, Legal, Clinical, and Engineering domains.</p>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <!-- Leaderboard -->
+        <div class="glass-panel col-leaderboard">
+            <div class="panel-header">Live Global Leaderboard</div>
+            <ul class="leaderboard-list" id="lb-list">
+                <!-- Injected via JS -->
+            </ul>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="glass-panel col-radar">
+            <div class="panel-header">Score Breakdown (GPT-4o)</div>
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Active Domains -->
+        <div class="glass-panel col-domains">
+            <div class="panel-header">Active Task Environments</div>
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">⚙️ Custom Support</h4>
+                <div class="domain-tags">
+                    <span class="domain-tag">Classification</span>
+                    <span class="domain-tag">Semantic Drafting</span>
+                    <span class="domain-tag">SLA Queue Engine</span>
+                    <span class="domain-tag" style="border-color: var(--primary); color: #fff;">Multi-Turn De-escalation</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">⚖️ Legal Review</h4>
+                <div class="domain-tags">
+                    <span class="domain-tag">Clause Identification</span>
+                    <span class="domain-tag">Risk Flagging</span>
+                    <span class="domain-tag">Redline Writing</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">🏥 Clinical Triage</h4>
+                <div class="domain-tags">
+                    <span class="domain-tag">Body System</span>
+                    <span class="domain-tag">ESI Assignment</span>
+                    <span class="domain-tag">Triage Note Gen</span>
+                </div>
+            </div>
+
+            <div>
+                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">💻 Full Stack PRs</h4>
+                <div class="domain-tags">
+                    <span class="domain-tag">Type Taxonomy</span>
+                    <span class="domain-tag">Patch Bug Hunting</span>
+                    <span class="domain-tag">Rejection Rebuttals</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Replay Viewer -->
+        <div class="glass-panel col-replay">
+            <div class="panel-header">Interpretability Replay Mode <span>(Latest Episode)</span></div>
+            <div class="replay-timeline">
+                <div class="timeline-step">1</div>
+                <div class="timeline-step">2</div>
+                <div class="timeline-step active">3</div>
+                <div class="timeline-step">4</div>
+                <div class="timeline-step">5</div>
+                <div class="timeline-step">6</div>
+                <div class="timeline-step">7</div>
+                <div class="timeline-step">8</div>
+            </div>
+            <div class="replay-console">
+                <span style="color: #616e88"># Episode ID: TKT-MT-8B391A -- Seed: 42</span><br><br>
+                <span class="log-env">[Environment]</span> Observation 3 yielded: Ticket TKT-3342, Priority: unknown, Queue Load: 4<br>
+                <span class="log-env">[Environment]</span> Valid Actions: [DRAFT_RESPONSE, ESCALATE, CLOSE]<br>
+                <span class="log-agent">[Agent_GPT4o]</span> Action Submitted: { "action_type": "draft_response", "response_text": "I understand you are frustrated by the charge..." }<br>
+                <span style="color: #d8dee9">> Executing semantic similarity verification against KB articles...</span><br>
+                <span style="color: #ebcb8b">> Warning: Detected prompt injection attempt in user message! Proceeding cautiously.</span><br>
+                <span style="color: #a3be8c">> Reward Emitted: +0.65 (Trajectory Bonus Applied)</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Initialize Leaderboard
+    const leaderboardData = [
+        { name: "Llama-3 (8B) Baseline", score: 0.875, date: "Today", highlight: true },
+        { name: "GPT-4o", score: 0.812, date: "Yesterday" },
+        { name: "Claude 3.5 Sonnet", score: 0.793, date: "2 days ago" },
+        { name: "Heuristic Baseline", score: 0.620, date: "—" },
+        { name: "Random Agent", score: 0.211, date: "—" },
+    ];
+
+    const lbContainer = document.getElementById('lb-list');
+    leaderboardData.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item' + (item.highlight ? ' highlight' : '');
+        li.innerHTML = `
+            <div class="lb-rank">#${index + 1}</div>
+            <div class="lb-name">${item.name} <span style="font-size: 0.8rem; color: #64748b; margin-left: 8px;">${item.date}</span></div>
+            <div class="lb-score">${item.score.toFixed(3)}</div>
+        `;
+        lbContainer.appendChild(li);
+    });
+
+    // Initialize Radar Chart
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    
+    // Gradient for the radar
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.5)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.5)');
+
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Classification', 'Semantic Drafting', 'SLA Adherence', 'FCR %', 'Adversarial Robustness'],
+            datasets: [{
+                label: 'LLaMA-3 Agent Profile',
+                data: [0.92, 0.78, 0.85, 0.60, 0.88],
+                backgroundColor: gradient,
+                borderColor: '#8b5cf6',
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#8b5cf6',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#8b5cf6',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    pointLabels: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 11, weight: 500 }
+                    },
+                    ticks: {
+                        display: false,
+                        min: 0,
+                        max: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Interactive timeline mockup
+    document.querySelectorAll('.timeline-step').forEach(step => {
+        step.addEventListener('click', (e) => {
+            document.querySelectorAll('.timeline-step').forEach(s => s.classList.remove('active'));
+            e.target.classList.add('active');
+        });
+    });
+</script>
+
+</body>
+</html>

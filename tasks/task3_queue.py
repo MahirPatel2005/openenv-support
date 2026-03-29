@@ -40,6 +40,18 @@ AGENTS = [
 PRIORITY_SLA_MINUTES = {"P1": 240, "P2": 480, "P3": 1440, "P4": 4320}
 ESCALATION_THRESHOLD = 3  # Escalations beyond this count as excessive
 
+def simulate_csat(ticket, resolution_time_minutes, had_escalation):
+    base = 0.7
+    if resolution_time_minutes < 60:
+        base += 0.2
+    if had_escalation:
+        base -= 0.3
+    if ticket.customer_tier == "enterprise":
+        base -= 0.1
+    if ticket.sentiment_score < -0.5:
+        base -= 0.15
+    return max(0.0, min(1.0, base))
+
 
 class QueueManagementTask:
     TASK_ID = "queue_management"
@@ -115,11 +127,20 @@ class QueueManagementTask:
         fcr_rate = self.fcr_count / max(self.resolved_count, 1)
         escalation_penalty = min(self.escalation_count / ESCALATION_THRESHOLD, 1.0) * 0.2
 
+        # Efficiency Bonus
+        steps_per_ticket = self.step_count / max(self.resolved_count, 1)
+        efficiency_bonus = 0.0
+        if steps_per_ticket <= 2.0:
+            efficiency_bonus = 0.1
+        elif steps_per_ticket <= 2.5:
+            efficiency_bonus = 0.05
+
         final_score = (
             resolution_rate * 0.35
             + sla_compliance * 0.35
             + fcr_rate * 0.20
             - escalation_penalty
+            + efficiency_bonus
         )
         final_score = max(0.0, min(1.0, final_score))
 
@@ -136,6 +157,7 @@ class QueueManagementTask:
                 "sla_breaches": self.sla_breaches,
                 "fcr_rate": round(fcr_rate, 4),
                 "escalations": self.escalation_count,
+                "efficiency_bonus": efficiency_bonus,
                 "open_remaining": open_remaining,
                 "steps_used": self.step_count,
             },
@@ -247,20 +269,25 @@ class QueueManagementTask:
         elif action.action_type == AgentAction.RESOLVE:
             if ticket.status not in (TicketStatus.IN_PROGRESS, TicketStatus.ESCALATED):
                 penalty -= 0.05
-                breakdown["resolve_penalty"] = "ticket not in progress"
+                breakdown["resolve_penalty"] = -0.05
             else:
-                now = datetime.utcnow().isoformat() + "Z"
-                sla_ok = ticket.sla_deadline and ticket.sla_deadline > now
-                reward_val = 0.3 + (0.2 if sla_ok else -0.1)
+                now_str = datetime.utcnow().isoformat() + "Z"
+                sla_ok = ticket.sla_deadline and ticket.sla_deadline > now_str
+                
+                # Calculate resolution duration
+                created_dt = datetime.fromisoformat(ticket.created_at.replace("Z", "+00:00"))
+                now_dt = datetime.fromisoformat(now_str.replace("Z", "+00:00"))
+                res_time_mins = (now_dt - created_dt).total_seconds() / 60.0
+                
+                had_escalation = ticket.status == TicketStatus.ESCALATED
+                csat = simulate_csat(ticket, res_time_mins, had_escalation)
+                
+                reward_val = csat * 0.7 + (0.3 if sla_ok else 0.0)
 
                 # FCR bonus: resolved without escalation
-                if ticket.status != TicketStatus.ESCALATED:
+                if not had_escalation:
                     self.fcr_count += 1
                     reward_val += 0.1
-
-                # Customer tier bonus
-                if ticket.customer_tier == "enterprise":
-                    reward_val += 0.05
 
                 ticket.status = TicketStatus.RESOLVED
                 self.resolved_count += 1
