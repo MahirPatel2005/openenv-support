@@ -1,30 +1,35 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "openenv-support"
 version = "2.0.0"
-description = "Multi-Domain AI Agent Evaluation Environment"
+description = "Multi-domain OpenEnv environment — Customer Support, Legal, Clinical, Engineering"
 readme = "README.md"
+license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
-authors = [
-    { name = "OpenEnv Contributor" }
-]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-]
+
 dependencies = [
-    "fastapi>=0.115.6",
-    "uvicorn[standard]>=0.32.1",
-    "pydantic>=2.10.3",
-    "httpx>=0.28.1",
-    "openai>=1.58.1",
+    "openenv-core>=0.2.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+    "openai>=1.58.0",
     "python-multipart>=0.0.20",
-    "pyyaml>=6.0.2",
+    "pyyaml>=6.0.0",
     "datasets>=2.21.0",
     "huggingface-hub>=0.24.0",
-    "sentence-transformers>=3.1.1"
+    "sentence-transformers>=3.1.0",
 ]
+
+[project.scripts]
+server = "server.app:start"
+
+[project.urls]
+Homepage = "https://huggingface.co/spaces/MahirPatelCG/openenv-support"
+Repository = "https://github.com/MahirPatel2005/openenv-support"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "tasks", "data", "graders", "server"]
