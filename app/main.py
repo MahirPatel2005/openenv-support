@@ -309,7 +309,6 @@ async def health():
 
 @app.get("/", response_class=FileResponse)
 async def root():
-    static_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
-    if not os.path.exists(static_path):
-        static_path = os.path.join("app", "static", "index.html")
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_path = os.path.join(root_dir, "static", "index.html")
     return FileResponse(static_path)
