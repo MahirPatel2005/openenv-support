@@ -1,6 +1,6 @@
 ---
-title: Customer Support Triage — OpenEnv
-emoji: 🎫
+title: OpenEnv — Multi-Domain
+emoji: 🌐
 colorFrom: indigo
 colorTo: purple
 sdk: docker
@@ -9,15 +9,15 @@ license: apache-2.0
 tags:
   - openenv
   - reinforcement-learning
-  - customer-support
+  - agents
   - nlp
-  - agent-environment
-short_description: OpenEnv environment for customer support triage agents
+  - multi-domain
+short_description: OpenEnv multi-domain evaluation environment for AI agents
 ---
 
-# Customer Support Triage — OpenEnv Environment
+# OpenEnv — Multi-Domain AI Agent Environment
 
-> A real-world OpenEnv environment where AI agents learn to **triage, classify, prioritize, and resolve** customer support tickets across a SaaS platform.
+> A comprehensive OpenEnv environment where AI agents are evaluated across 13 complex real-world tasks spanning 4 professional domains: **Customer Support, Legal Review, Clinical Triage, and Software Engineering (PR Review)**.
 
 [![OpenEnv](https://img.shields.io/badge/OpenEnv-v1.0.0-6c63ff)](https://openenv.dev)
 [![HuggingFace Spaces](https://img.shields.io/badge/🤗%20Spaces-openenv--support-yellow)](https://huggingface.co/spaces)
@@ -27,86 +27,44 @@ short_description: OpenEnv environment for customer support triage agents
 
 ## 🎯 Environment Description
 
-Customer support triage is a high-stakes, real-world task that every software company faces. Agents must:
+To build general-purpose AI agents, we must evaluate them outside of traditional multiple-choice benchmarks. This environment provides 13 interactive, multi-step tasks across diverse verticals to test an agent's reasoning, tool use, and decision-making capabilities. 
 
-- **Classify** incoming tickets accurately by category and urgency
-- **Draft** professional, factually grounded customer responses using a knowledge base
-- **Manage** a live queue of tickets across specialized agents under SLA constraints
-
-This environment models realistic support scenarios including billing disputes, API outages, SSO failures, account transfers, feature requests, and abuse reports — with varying customer tiers, sentiment signals, and time pressure.
+Agents must classify data, identify risks, draft domain-specific responses, and manage queues under dynamic constraints.
 
 ---
 
-## 📋 Tasks
+## 📋 Tasks & Domains
 
-| Task | ID | Difficulty | Max Steps | Pass Threshold |
-|------|----|-----------|-----------|----------------|
-| Ticket Classification | `ticket_classification` | 🟢 Easy | 10 | 0.70 |
-| Response Drafting | `response_drafting` | 🟡 Medium | 6 | 0.60 |
-| SLA Queue Management | `queue_management` | 🔴 Hard | 40 | 0.50 |
+This environment features 13 tasks across 4 distinct professional domains:
 
-### Task 1: Ticket Classification (Easy)
-Classify 10 incoming tickets by **category** (billing/technical/account/feature_request/abuse/unknown) and **priority** (P1-P4). Scores 0.6 for correct category, 0.4 for correct priority (with partial credit for adjacent priority levels).
+### 🎫 Customer Support
+| Task | ID | Difficulty | Max Steps |
+|------|----|-----------|-----------|
+| Ticket Classification | `ticket_classification` | 🟢 Easy | 10 |
+| Response Drafting | `response_drafting` | 🟡 Medium | 6 |
+| SLA Queue Management | `queue_management` | 🔴 Hard | 40 |
+| Multi-Turn De-escalation | `multi_turn_conversation` | 🟣 Very Hard | 8 |
 
-### Task 2: Response Drafting (Medium)
-Draft complete customer-facing responses to pre-classified tickets. Graded on 5 dimensions using a deterministic rubric:
-- KB reference (25%) — uses relevant knowledge base information
-- Issue addressed (30%) — directly addresses the customer's specific problem
-- Actionable steps (20%) — provides concrete next steps
-- Tone & empathy (15%) — professional, empathetic language
-- No hallucination (10%) — no false promises or invented information
+### ⚖️ Legal Review
+| Task | ID | Difficulty | Max Steps |
+|------|----|-----------|-----------|
+| Clause Identification | `legal_clause_identification` | 🟢 Easy | 10 |
+| Risk Flagging | `legal_risk_flagging` | 🟡 Medium | 10 |
+| Clause Redlining | `legal_clause_redlining` | 🔴 Hard | 5 |
 
-### Task 3: SLA Queue Management (Hard)
-Manage a queue of 20 mixed tickets across 3 specialized agents. Actions: `assign_ticket`, `escalate`, `resolve`, `close`, `no_op`. Score based on:
-- Resolution rate (35%)
-- SLA compliance (35%)
-- First-contact resolution rate (20%)
-- Escalation penalty (-20% if excessive)
+### 🏥 Clinical Triage
+| Task | ID | Difficulty | Max Steps |
+|------|----|-----------|-----------|
+| Body System Classification | `clinical_triage_classification` | 🟢 Easy | 10 |
+| ESI Level Assignment | `clinical_esi_assignment` | 🟡 Medium | 10 |
+| Triage Note Generation | `clinical_triage_note` | 🔴 Hard | 5 |
 
----
-
-## 🔌 Action & Observation Spaces
-
-### Observation
-```python
-class Observation(BaseModel):
-    task_id: str
-    step: int
-    current_ticket: Optional[Ticket]       # For tasks 1 & 2
-    ticket_queue: List[Ticket]             # For task 3
-    agents: List[AgentInfo]                # For task 3
-    knowledge_base: List[KBArticle]        # For task 2
-    sla_status: Dict[str, str]             # ticket_id -> ok/warning/breached
-    valid_actions: List[str]
-    episode_done: bool
-    info: Dict[str, Any]
-```
-
-### Action
-```python
-class Action(BaseModel):
-    action_type: AgentAction               # classify | draft_response | assign_ticket | escalate | resolve | close | no_op
-    ticket_id: Optional[str]
-    category: Optional[TicketCategory]     # For classify
-    priority: Optional[TicketPriority]     # For classify
-    response_text: Optional[str]           # For draft_response
-    target_agent_id: Optional[str]         # For assign_ticket / escalate
-    resolution_summary: Optional[str]      # For resolve
-    reasoning: Optional[str]              # Optional transparency field
-```
-
-### Reward
-```python
-class Reward(BaseModel):
-    total: float                           # -1.0 to 1.0
-    classification_accuracy: float
-    response_quality: float
-    sla_compliance: float
-    first_contact_resolution: float
-    customer_satisfaction: float
-    penalty: float                         # Negative component
-    breakdown: Dict[str, float]            # Per-dimension scores
-```
+### 💻 PR Review (Software Engineering)
+| Task | ID | Difficulty | Max Steps |
+|------|----|-----------|-----------|
+| PR Type Classification | `pr_type_classification` | 🟢 Easy | 10 |
+| Bug Identification | `pr_bug_identification` | 🟡 Medium | 5 |
+| Code Review Comment | `pr_review_comment` | 🔴 Hard | 5 |
 
 ---
 
@@ -136,12 +94,10 @@ docker run -p 7860:7860 openenv-support
 ### Running the Baseline
 
 ```bash
-export OPENAI_API_KEY="sk-..."
 export OPENENV_BASE_URL="http://localhost:7860"
 
-python baseline_inference.py               # All tasks
-python baseline_inference.py --task ticket_classification
-python baseline_inference.py --model gpt-4o
+# Evaluate heuristic baseline on all tasks
+python baseline_inference.py              
 ```
 
 ### OpenEnv Validate
@@ -149,17 +105,6 @@ python baseline_inference.py --model gpt-4o
 ```bash
 openenv validate --url http://localhost:7860
 ```
-
----
-
-## 📊 Baseline Scores
-
-| Agent | Classification | Drafting | Queue Mgmt | Overall |
-|-------|---------------|---------|------------|---------|
-| Heuristic (keyword-based) | 0.72 | 0.61 | 0.54 | 0.62 |
-| GPT-4o-mini | ~0.85 | ~0.74 | ~0.61 | ~0.73 |
-
-> Scores are deterministic given the same random seed. Run `/baseline` endpoint to reproduce.
 
 ---
 
@@ -188,16 +133,24 @@ openenv-support/
 ├── tasks/
 │   ├── task1_classification.py
 │   ├── task2_drafting.py
-│   └── task3_queue.py
+│   ├── task3_queue.py
+│   ├── task4_multiturn.py
+│   ├── legal_tasks.py
+│   ├── clinical_tasks.py
+│   └── pr_tasks.py
 ├── graders/
-│   └── baseline_agent.py    # Heuristic baseline
+│   └── baseline_agent.py    # Auto-grader heuristics
 ├── data/
-│   ├── tickets.py           # Synthetic ticket dataset
-│   └── knowledge_base.py    # KB articles
+│   ├── tickets.py
+│   ├── knowledge_base.py
+│   ├── legal_data.py
+│   ├── clinical_data.py
+│   └── pr_data.py
 ├── static/
-│   └── index.html           # Interactive dashboard
+│   └── index.html           # Interactive multi-domain dashboard
 ├── openenv.yaml             # OpenEnv metadata
-├── baseline_inference.py    # LLM baseline script
+├── baseline_inference.py    # Automated test runner for baseline
+├── validate.py              # Validation script
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
@@ -207,8 +160,8 @@ openenv-support/
 
 ## 🏗️ Design Decisions
 
-**Why customer support?** It's a universal, high-value real-world task. Every SaaS company needs it. The task has natural difficulty progression (classification → response quality → queue optimization under constraints) and rich partial reward signals at every step.
+**Why multi-domain?** Real-world agents will need to operate across various specific verticals. Providing environments in Support, Legal, Clinical, and Engineering proves that an agent architecture is truly generalizable and robust.
 
-**Why deterministic graders?** The rubric uses keyword matching, heuristic NLP signals, and exact comparisons — no LLM-in-the-loop for grading, ensuring reproducible scores across runs.
+**Why deterministic graders?** The rubric uses keyword matching, heuristic NLP signals (via \`sentence-transformers\`), semantic similarities, and exact comparisons — minimizing LLM-in-the-loop dependencies for grading and ensuring reproducible scores across runs for all 13 tasks.
 
-**Reward shaping:** Every step returns a non-zero reward signal. Even incorrect actions return small penalties rather than zero, giving RL agents a gradient to follow rather than a sparse reward landscape.
+**Dynamic Reward Shaping:** Every step returns a non-zero reward signal. Even incorrect actions return small penalties rather than zero, giving RL agents a gradient to follow rather than a sparse reward landscape.
