@@ -142,12 +142,12 @@ class QueueManagementTask:
             - escalation_penalty
             + efficiency_bonus
         )
-        final_score = max(0.0, min(1.0, final_score))
+        final_score = max(0.01, min(0.99, final_score))
 
         return {
             "task_id": self.TASK_ID,
             "episode_id": self.episode_id,
-            "final_score": round(final_score, 4),
+            "final_score": max(0.01, min(0.99, round(final_score, 4))),
             "passed": final_score >= 0.5,
             "metrics": {
                 "total_tickets": total_tickets,

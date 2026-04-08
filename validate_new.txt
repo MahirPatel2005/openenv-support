@@ -1,0 +1,53 @@
+
+============================================================
+OpenEnv Validator — http://localhost:7860
+============================================================
+
+  ✗ FAIL  Server responds
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  GET /tasks
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (ticket_classification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (response_drafting)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (queue_management)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (multi_turn_conversation)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (legal_clause_identification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (legal_risk_flagging)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (legal_clause_redlining)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (clinical_triage_classification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (clinical_esi_assignment)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (clinical_triage_note)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (pr_type_classification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (pr_bug_identification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /reset (pr_review_comment)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /step
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  GET /state
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /grader (ticket_classification)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /grader (response_drafting)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /grader (queue_management)
+         <urlopen error [Errno 61] Connection refused>
+  ✗ FAIL  POST /baseline
+         <urlopen error [Errno 61] Connection refused>
+
+============================================================
+Result: 0/21 checks passed
+❌  Multiple failures — fix before submitting.
+============================================================
+

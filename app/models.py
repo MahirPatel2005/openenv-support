@@ -233,7 +233,7 @@ class EpisodeResult(BaseModel):
     task_id: str
     episode_id: str
     total_steps: int
-    final_score: float = Field(ge=0.0, le=1.0)
+    final_score: float = Field(gt=0.0, lt=1.0)
     reward_history: List[float]
     metrics: Dict[str, Any]
     passed: bool

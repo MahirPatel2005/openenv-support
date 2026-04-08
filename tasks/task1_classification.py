@@ -135,7 +135,7 @@ class ClassificationTask:
 
     def grader_score(self) -> Dict[str, Any]:
         if not self.results:
-            return {"final_score": 0.0, "metrics": {}}
+            return {"final_score": 0.01, "metrics": {}}
 
         total = sum(r["score"] for r in self.results) / len(self.results)
         cat_acc = sum(
@@ -171,7 +171,7 @@ class ClassificationTask:
         return {
             "task_id": self.TASK_ID,
             "episode_id": self.episode_id,
-            "final_score": round(total, 4),
+            "final_score": max(0.01, min(0.99, round(total, 4))),
             "passed": total >= 0.7,
             "metrics": {
                 "category_accuracy": round(cat_acc, 4),
