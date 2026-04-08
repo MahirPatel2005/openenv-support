@@ -270,7 +270,7 @@ async def run_task(client: OpenAI, task_id: str) -> dict:
                 print(f"  [step {step:02d}] Error: {e}", file=sys.stderr); break
             obs = result["observation"]
             rewards.append(result["reward"]["total"])
-            print(f"STEP {step:02d} | reward={result['reward']['total']:.3f} | done={result['done']}")
+            print(f"[STEP] step={step} reward={result['reward']['total']:.3f}", flush=True)
         r = await http.post("/grader", params={"task_id": task_id})
         r.raise_for_status()
         score = r.json(); score["reward_history"] = rewards
@@ -310,19 +310,19 @@ async def main():
     for i, task_id in enumerate(tasks_to_run):
         if i > 0 and args.pause > 0:
             time.sleep(args.pause)
-        print(f"START {task_id}")
+        print(f"[START] task={task_id}", flush=True)
         try:
             result = await run_task(client, task_id)
             results[task_id] = result
             status = "✓ PASS" if result["passed"] else "✗ FAIL"
-            print(f"END {task_id} Final score: {result['final_score']:.4f}")
+            print(f"[END] task={task_id} score={result['final_score']:.4f} steps={len(results[task_id].get('reward_history', []))}", flush=True)
             metrics = {k:v for k,v in result.get("metrics",{}).items() if not isinstance(v,list) and k!="per_ticket_scores"}
             if metrics: print(f"    Metrics: {json.dumps(metrics, indent=2)}")
         except Exception as e:
             import traceback
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
             results[task_id] = {"final_score":0.0,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
-            print(f"END {task_id} Final score: 0.0000")
+            print(f"[END] task={task_id} score=0.0000 steps=0", flush=True)
     scores = [r["final_score"] for r in results.values()]
     overall = sum(scores)/len(scores) if scores else 0.0
     print(f"\n{'='*60}\nBASELINE SUMMARY\n{'='*60}")
