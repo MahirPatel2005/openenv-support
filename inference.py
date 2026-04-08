@@ -321,7 +321,7 @@ async def main():
         except Exception as e:
             import traceback
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
-            results[task_id] = {"final_score":0.01,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
+            results[task_id] = {"final_score":0.0001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
             print(f"[END] task={task_id} score=0.0000 steps=0", flush=True)
     scores = [r["final_score"] for r in results.values()]
     overall = sum(scores)/len(scores) if scores else 0.0

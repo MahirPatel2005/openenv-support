@@ -50,9 +50,9 @@ class LegalIdentifyClauseTask:
     def state(self): return {"task_id": self.TASK_ID, "step": self.step_count, "results": self.results}
     
     def grader_score(self):
-        if not self.results: return {"final_score": 0.01}
+        if not self.results: return {"final_score": 0.0001}
         total = sum(r["score"] for r in self.results) / len(self.results)
-        return {"task_id": self.TASK_ID, "final_score": max(0.01, min(0.99, total)), "passed": total >= 0.7}
+        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, total)), "passed": total >= 0.7}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.clauses):
@@ -102,7 +102,7 @@ class LegalRiskFlagTask:
 
     def grader_score(self):
         total = sum(r["score"] for r in self.results) / len(self.results) if self.results else 0.0
-        return {"task_id": self.TASK_ID, "final_score": max(0.01, min(0.99, round(total, 4))), "passed": total >= 0.6}
+        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, round(total, 4))), "passed": total >= 0.6}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.clauses):
@@ -149,7 +149,7 @@ class LegalRedlineTask:
     
     def grader_score(self):
         total = sum(r["score"] for r in self.results) / len(self.results) if self.results else 0.0
-        return {"task_id": self.TASK_ID, "final_score": max(0.01, min(0.99, total)), "passed": total >= 0.6}
+        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, total)), "passed": total >= 0.6}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.clauses):

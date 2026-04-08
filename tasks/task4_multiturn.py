@@ -200,7 +200,7 @@ class MultiTurnTask:
         return {
             "task_id": self.TASK_ID,
             "episode_id": self.episode_id,
-            "final_score": max(0.01, min(0.99, self.score)),
+            "final_score": max(0.0001, min(0.9999, self.score)),
             "passed": self.score >= 0.7,
             "metrics": {
                 "turns_survived": self.conversation_turn,

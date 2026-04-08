@@ -287,7 +287,7 @@ async def grader(task_id: Optional[str] = None) -> Dict[str, Any]:
             cons_penalty = -0.05 if std > 0.4 else 0.0
         except Exception:
             cons_penalty = 0.0
-        result["final_score"] = max(0.01, min(0.99, result["final_score"] + traj_bonus + cons_penalty))
+        result["final_score"] = max(0.0001, min(0.9999, result["final_score"] + traj_bonus + cons_penalty))
         result.setdefault("metrics", {})
         result["metrics"]["trajectory_bonus"] = traj_bonus
         result["metrics"]["consistency_penalty"] = cons_penalty
