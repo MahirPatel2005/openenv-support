@@ -12,9 +12,14 @@ import argparse, asyncio, json, os, sys, time
 import httpx
 from openai import OpenAI
 
-BASE_URL = os.getenv("OPENENV_BASE_URL", "http://localhost:7860")
-API_KEY  = os.getenv("OPENAI_API_KEY", "")
-MODEL    = os.getenv("OPENENV_MODEL", "llama-3.3-70b-versatile")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+# Optional — if you use from_docker_image():
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
+OPENENV_URL = os.getenv("OPENENV_BASE_URL", "http://localhost:7860")
 
 TASK_PROMPTS = {
 "ticket_classification": """Classify support tickets. Respond ONLY with raw JSON.
@@ -214,7 +219,7 @@ def call_llm(client: OpenAI, obs: dict, task_id: str) -> dict:
     for attempt in range(4):
         try:
             completion = client.chat.completions.create(
-                model=MODEL,
+                model=MODEL_NAME,
                 messages=[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],
                 temperature=0.0, max_tokens=max_tok,
             )
@@ -240,7 +245,7 @@ def call_llm(client: OpenAI, obs: dict, task_id: str) -> dict:
             else: raise
 
 async def run_task(client: OpenAI, task_id: str) -> dict:
-    async with httpx.AsyncClient(base_url=BASE_URL, timeout=60.0) as http:
+    async with httpx.AsyncClient(base_url=OPENENV_URL, timeout=60.0) as http:
         r = await http.post("/reset", params={"task_id": task_id})
         r.raise_for_status()
         obs = r.json()["observation"]
@@ -265,7 +270,7 @@ async def run_task(client: OpenAI, task_id: str) -> dict:
                 print(f"  [step {step:02d}] Error: {e}", file=sys.stderr); break
             obs = result["observation"]
             rewards.append(result["reward"]["total"])
-            print(f"  step {step:02d} | reward={result['reward']['total']:.3f} | done={result['done']}")
+            print(f"STEP {step:02d} | reward={result['reward']['total']:.3f} | done={result['done']}")
         r = await http.post("/grader", params={"task_id": task_id})
         r.raise_for_status()
         score = r.json(); score["reward_history"] = rewards
@@ -274,15 +279,15 @@ async def run_task(client: OpenAI, task_id: str) -> dict:
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", default="all")
-    parser.add_argument("--model", default=MODEL)
-    parser.add_argument("--base-url", default=BASE_URL)
+    parser.add_argument("--model", default=MODEL_NAME)
+    parser.add_argument("--base-url", default=API_BASE_URL)
     parser.add_argument("--pause", type=int, default=3, help="Seconds between tasks")
     args = parser.parse_args()
-    if not API_KEY:
+    if not HF_TOKEN:
         print("WARNING: No API key. Running heuristic baseline.", file=sys.stderr)
         import httpx as _httpx
         async def _run_heuristic():
-            async with _httpx.AsyncClient(base_url=BASE_URL, timeout=30.0) as http:
+            async with _httpx.AsyncClient(base_url=OPENENV_URL, timeout=30.0) as http:
                 r = await http.post("/baseline")
                 r.raise_for_status()
                 data = r.json()
@@ -297,26 +302,27 @@ async def main():
             print("\n  Results saved to baseline_results.json")
         asyncio.run(_run_heuristic())
         return
-    client = OpenAI(api_key=API_KEY, base_url="https://api.groq.com/openai/v1")
+    client = OpenAI(api_key=HF_TOKEN, base_url=args.base_url)
     all_tasks = ["ticket_classification","response_drafting","queue_management","multi_turn_conversation","legal_clause_identification","legal_risk_flagging","legal_clause_redlining","clinical_triage_classification","clinical_esi_assignment","clinical_triage_note","pr_type_classification","pr_bug_identification","pr_review_comment"]
     tasks_to_run = all_tasks if args.task=="all" else [args.task]
-    print(f"Model: {MODEL} | Server: {BASE_URL} | Tasks: {len(tasks_to_run)}")
+    print(f"Model: {args.model} | Server: {OPENENV_URL} | Tasks: {len(tasks_to_run)}")
     results = {}
     for i, task_id in enumerate(tasks_to_run):
         if i > 0 and args.pause > 0:
             time.sleep(args.pause)
-        print(f"\n{'='*60}\nRunning task: {task_id}\n{'='*60}")
+        print(f"START {task_id}")
         try:
             result = await run_task(client, task_id)
             results[task_id] = result
             status = "✓ PASS" if result["passed"] else "✗ FAIL"
-            print(f"  {status} Final score: {result['final_score']:.4f}")
+            print(f"END {task_id} Final score: {result['final_score']:.4f}")
             metrics = {k:v for k,v in result.get("metrics",{}).items() if not isinstance(v,list) and k!="per_ticket_scores"}
             if metrics: print(f"    Metrics: {json.dumps(metrics, indent=2)}")
         except Exception as e:
             import traceback
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
             results[task_id] = {"final_score":0.0,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
+            print(f"END {task_id} Final score: 0.0000")
     scores = [r["final_score"] for r in results.values()]
     overall = sum(scores)/len(scores) if scores else 0.0
     print(f"\n{'='*60}\nBASELINE SUMMARY\n{'='*60}")
@@ -325,7 +331,7 @@ async def main():
         print(f"  {tid:<38} {r['final_score']:.4f}  {mark}")
     print(f"  {'OVERALL':<38} {overall:.4f}")
     with open("baseline_results.json","w") as f:
-        json.dump({"model":MODEL,"overall":overall,"tasks":results},f,indent=2)
+        json.dump({"model":args.model,"overall":overall,"tasks":results},f,indent=2)
     print("\n  Results saved to baseline_results.json")
 
 if __name__ == "__main__":
