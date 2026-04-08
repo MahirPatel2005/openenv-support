@@ -97,7 +97,7 @@ docker run -p 7860:7860 openenv-support
 export OPENENV_BASE_URL="http://localhost:7860"
 
 # Evaluate heuristic baseline on all tasks
-python baseline_inference.py              
+python inference.py              
 ```
 
 ### OpenEnv Validate
@@ -149,7 +149,7 @@ openenv-support/
 ├── static/
 │   └── index.html           # Interactive multi-domain dashboard
 ├── openenv.yaml             # OpenEnv metadata
-├── baseline_inference.py    # Automated test runner for baseline
+├── inference.py    # Automated test runner for baseline
 ├── validate.py              # Validation script
 ├── requirements.txt
 ├── Dockerfile

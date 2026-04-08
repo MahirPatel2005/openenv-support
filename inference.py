@@ -279,7 +279,24 @@ async def main():
     parser.add_argument("--pause", type=int, default=3, help="Seconds between tasks")
     args = parser.parse_args()
     if not API_KEY:
-        print("ERROR: OPENAI_API_KEY not set.", file=sys.stderr); sys.exit(1)
+        print("WARNING: No API key. Running heuristic baseline.", file=sys.stderr)
+        import httpx as _httpx
+        async def _run_heuristic():
+            async with _httpx.AsyncClient(base_url=BASE_URL, timeout=30.0) as http:
+                r = await http.post("/baseline")
+                r.raise_for_status()
+                data = r.json()
+            print(f"\n{'='*60}\nHEURISTIC BASELINE\n{'='*60}")
+            for tid, result in data.get("tasks", {}).items():
+                mark = "✓ PASS" if result.get("passed") else "✗ FAIL"
+                print(f"  {tid:<38} {result['final_score']:.4f}  {mark}")
+            overall = data.get("overall_score", 0)
+            print(f"  {'OVERALL':<38} {overall:.4f}")
+            with open("baseline_results.json", "w") as f:
+                json.dump(data, f, indent=2)
+            print("\n  Results saved to baseline_results.json")
+        asyncio.run(_run_heuristic())
+        return
     client = OpenAI(api_key=API_KEY, base_url="https://api.groq.com/openai/v1")
     all_tasks = ["ticket_classification","response_drafting","queue_management","multi_turn_conversation","legal_clause_identification","legal_risk_flagging","legal_clause_redlining","clinical_triage_classification","clinical_esi_assignment","clinical_triage_note","pr_type_classification","pr_bug_identification","pr_review_comment"]
     tasks_to_run = all_tasks if args.task=="all" else [args.task]

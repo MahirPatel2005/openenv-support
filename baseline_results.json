@@ -1,21 +1,21 @@
 {
   "model": "llama-3.3-70b-versatile",
-  "overall": 0.9014798534798535,
+  "overall": 0.8686336996336996,
   "tasks": {
     "ticket_classification": {
       "task_id": "ticket_classification",
-      "episode_id": "bb7d1009-579b-4572-9275-2a593e26f1a6",
-      "final_score": 0.78,
+      "episode_id": "1327cfee-14f3-4a2f-a7ea-e526a0a36114",
+      "final_score": 0.88,
       "passed": true,
       "metrics": {
-        "category_accuracy": 0.8,
-        "priority_accuracy": 0.5,
+        "category_accuracy": 0.9,
+        "priority_accuracy": 0.7,
         "adversarial_robustness_score": 0.6667,
         "diversity_penalty_applied": false,
         "tickets_classified": 10,
         "per_ticket_scores": [
           {
-            "ticket_id": "TKT-0A8DB2E4",
+            "ticket_id": "TKT-B16DB979",
             "predicted_category": "billing",
             "true_category": "billing",
             "predicted_priority": "P3",
@@ -25,7 +25,7 @@
             "adversarial_type": "hf-dataset"
           },
           {
-            "ticket_id": "TKT-DEF38326",
+            "ticket_id": "TKT-E4A07FC6",
             "predicted_category": "billing",
             "true_category": "billing",
             "predicted_priority": "P3",
@@ -35,57 +35,7 @@
             "adversarial_type": "hf-dataset"
           },
           {
-            "ticket_id": "TKT-ADV-953F",
-            "predicted_category": "unknown",
-            "true_category": "unknown",
-            "predicted_priority": "P4",
-            "true_priority": "P4",
-            "score": 1.0,
-            "is_adversarial": true,
-            "adversarial_type": "vague"
-          },
-          {
-            "ticket_id": "TKT-DBAA1CAA",
-            "predicted_category": "technical",
-            "true_category": "technical",
-            "predicted_priority": "P2",
-            "true_priority": "P1",
-            "score": 0.8,
-            "is_adversarial": false,
-            "adversarial_type": "api"
-          },
-          {
-            "ticket_id": "TKT-714A5437",
-            "predicted_category": "technical",
-            "true_category": "technical",
-            "predicted_priority": "P2",
-            "true_priority": "P3",
-            "score": 0.8,
-            "is_adversarial": false,
-            "adversarial_type": "mobile"
-          },
-          {
-            "ticket_id": "TKT-6C0E0372",
-            "predicted_category": "abuse",
-            "true_category": "abuse",
-            "predicted_priority": "P1",
-            "true_priority": "P1",
-            "score": 1.0,
-            "is_adversarial": false,
-            "adversarial_type": "phishing"
-          },
-          {
-            "ticket_id": "TKT-ADV-FA99",
-            "predicted_category": "unknown",
-            "true_category": "billing",
-            "predicted_priority": "P4",
-            "true_priority": "P3",
-            "score": 0.2,
-            "is_adversarial": true,
-            "adversarial_type": "prompt_injection"
-          },
-          {
-            "ticket_id": "TKT-ADV-37E3",
+            "ticket_id": "TKT-ADV-A7C7",
             "predicted_category": "billing",
             "true_category": "billing",
             "predicted_priority": "P3",
@@ -95,17 +45,27 @@
             "adversarial_type": "misdirection"
           },
           {
-            "ticket_id": "TKT-14B69835",
+            "ticket_id": "TKT-FCC64329",
             "predicted_category": "technical",
-            "true_category": "billing",
+            "true_category": "technical",
             "predicted_priority": "P2",
             "true_priority": "P3",
-            "score": 0.2,
+            "score": 0.8,
             "is_adversarial": false,
-            "adversarial_type": "hf-dataset"
+            "adversarial_type": "csv-export"
           },
           {
-            "ticket_id": "TKT-1BB8B3E9",
+            "ticket_id": "TKT-ADV-C332",
+            "predicted_category": "unknown",
+            "true_category": "unknown",
+            "predicted_priority": "P4",
+            "true_priority": "P4",
+            "score": 1.0,
+            "is_adversarial": true,
+            "adversarial_type": "vague"
+          },
+          {
+            "ticket_id": "TKT-7C59F9F6",
             "predicted_category": "billing",
             "true_category": "billing",
             "predicted_priority": "P3",
@@ -113,6 +73,46 @@
             "score": 1.0,
             "is_adversarial": false,
             "adversarial_type": "hf-dataset"
+          },
+          {
+            "ticket_id": "TKT-98B0F4F1",
+            "predicted_category": "technical",
+            "true_category": "technical",
+            "predicted_priority": "P1",
+            "true_priority": "P1",
+            "score": 1.0,
+            "is_adversarial": false,
+            "adversarial_type": "api"
+          },
+          {
+            "ticket_id": "TKT-A0F64CB8",
+            "predicted_category": "billing",
+            "true_category": "billing",
+            "predicted_priority": "P3",
+            "true_priority": "P3",
+            "score": 1.0,
+            "is_adversarial": false,
+            "adversarial_type": "hf-dataset"
+          },
+          {
+            "ticket_id": "TKT-62D15D9B",
+            "predicted_category": "billing",
+            "true_category": "billing",
+            "predicted_priority": "P3",
+            "true_priority": "P3",
+            "score": 1.0,
+            "is_adversarial": false,
+            "adversarial_type": "hf-dataset"
+          },
+          {
+            "ticket_id": "TKT-ADV-CFE8",
+            "predicted_category": "unknown",
+            "true_category": "billing",
+            "predicted_priority": "P4",
+            "true_priority": "P3",
+            "score": 0.2,
+            "is_adversarial": true,
+            "adversarial_type": "prompt_injection"
           }
         ],
         "trajectory_bonus": 0.0,
@@ -121,28 +121,28 @@
       "reward_history": [
         1.0,
         1.0,
-        1.0,
         0.8,
         0.8,
         1.0,
-        0.2,
-        0.8,
-        0.2,
-        1.0
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.2
       ]
     },
     "response_drafting": {
       "task_id": "response_drafting",
-      "episode_id": "9b1b3434-1a72-422e-8e46-16092682af68",
-      "final_score": 0.944,
+      "episode_id": "e40afaff-4d2c-4aaf-81c3-5141f37bc601",
+      "final_score": 0.967,
       "passed": true,
       "metrics": {
         "tickets_responded": 6,
         "per_ticket": [
           {
-            "ticket_id": "TKT-B260C8A0",
+            "ticket_id": "TKT-7DD82874",
             "category": "billing",
-            "response_length": 508,
+            "response_length": 515,
             "score": 1.0,
             "breakdown": {
               "kb_reference": 1.0,
@@ -153,22 +153,35 @@
             }
           },
           {
-            "ticket_id": "TKT-7922D061",
+            "ticket_id": "TKT-D3DE85B8",
             "category": "billing",
-            "response_length": 528,
-            "score": 0.9205,
+            "response_length": 483,
+            "score": 0.985,
             "breakdown": {
-              "kb_reference": 0.682,
+              "kb_reference": 1.0,
               "addresses_issue": 1.0,
               "actionable_steps": 1.0,
-              "tone_empathy": 1.0,
+              "tone_empathy": 0.9,
               "no_hallucination": 1.0
             }
           },
           {
-            "ticket_id": "TKT-04E92E35",
+            "ticket_id": "TKT-12AEDF70",
             "category": "billing",
-            "response_length": 556,
+            "response_length": 539,
+            "score": 0.985,
+            "breakdown": {
+              "kb_reference": 1.0,
+              "addresses_issue": 1.0,
+              "actionable_steps": 1.0,
+              "tone_empathy": 0.9,
+              "no_hallucination": 1.0
+            }
+          },
+          {
+            "ticket_id": "TKT-2C2CF7EF",
+            "category": "billing",
+            "response_length": 600,
             "score": 1.0,
             "breakdown": {
               "kb_reference": 1.0,
@@ -179,9 +192,22 @@
             }
           },
           {
-            "ticket_id": "TKT-BE184759",
+            "ticket_id": "TKT-AF06A7A9",
             "category": "billing",
-            "response_length": 544,
+            "response_length": 594,
+            "score": 0.892,
+            "breakdown": {
+              "kb_reference": 0.568,
+              "addresses_issue": 1.0,
+              "actionable_steps": 1.0,
+              "tone_empathy": 1.0,
+              "no_hallucination": 1.0
+            }
+          },
+          {
+            "ticket_id": "TKT-EEB130A2",
+            "category": "billing",
+            "response_length": 506,
             "score": 0.94,
             "breakdown": {
               "kb_reference": 1.0,
@@ -190,50 +216,24 @@
               "tone_empathy": 0.6,
               "no_hallucination": 1.0
             }
-          },
-          {
-            "ticket_id": "TKT-F01B4221",
-            "category": "billing",
-            "response_length": 511,
-            "score": 1.0,
-            "breakdown": {
-              "kb_reference": 1.0,
-              "addresses_issue": 1.0,
-              "actionable_steps": 1.0,
-              "tone_empathy": 1.0,
-              "no_hallucination": 1.0
-            }
-          },
-          {
-            "ticket_id": "TKT-32132F62",
-            "category": "billing",
-            "response_length": 482,
-            "score": 0.8037,
-            "breakdown": {
-              "kb_reference": 0.455,
-              "addresses_issue": 1.0,
-              "actionable_steps": 1.0,
-              "tone_empathy": 0.6,
-              "no_hallucination": 1.0
-            }
           }
         ],
-        "avg_response_length": 521.5,
+        "avg_response_length": 539.5,
         "trajectory_bonus": 0.0,
         "consistency_penalty": 0.0
       },
       "reward_history": [
         1.0,
-        0.9205,
+        0.985,
+        0.985,
         1.0,
-        0.94,
-        1.0,
-        0.8037
+        0.892,
+        0.94
       ]
     },
     "queue_management": {
       "task_id": "queue_management",
-      "episode_id": "14b45c87-3ea7-4032-8783-1421d3f95c00",
+      "episode_id": "307e69ee-b347-464b-bf84-e3b03302066e",
       "final_score": 1.0,
       "passed": true,
       "metrics": {
@@ -247,18 +247,18 @@
         "efficiency_bonus": 0.1,
         "open_remaining": 0,
         "steps_used": 40,
-        "trajectory_bonus": 0.0,
+        "trajectory_bonus": 0.05,
         "consistency_penalty": 0.0
       },
       "reward_history": [
         0.25,
-        0.89,
+        0.785,
+        0.25,
+        0.785,
         0.25,
         0.89,
         0.25,
-        0.89,
-        0.25,
-        0.89,
+        0.785,
         0.25,
         0.89,
         0.25,
@@ -295,7 +295,7 @@
     },
     "multi_turn_conversation": {
       "task_id": "multi_turn_conversation",
-      "episode_id": "07c66e95-692c-488a-9f8d-f5cb2ef8bd0b",
+      "episode_id": "fe6a76a0-a928-4a03-9adb-fd2892f4ee73",
       "final_score": 1.0,
       "passed": true,
       "metrics": {
@@ -317,11 +317,11 @@
       "reward_history": [
         1.0,
         1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
         0.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
         1.0,
         1.0,
         1.0
@@ -339,9 +339,9 @@
         1.0,
         1.0,
         1.0,
-        0.0,
         1.0,
-        1.0
+        1.0,
+        0.0
       ]
     },
     "legal_clause_redlining": {
@@ -358,7 +358,7 @@
     },
     "clinical_triage_classification": {
       "task_id": "clinical_triage_classification",
-      "final_score": 1.0,
+      "final_score": 0.8,
       "passed": true,
       "reward_history": [
         1.0,
@@ -366,28 +366,28 @@
         1.0,
         1.0,
         1.0,
+        0.0,
         1.0,
         1.0,
         1.0,
-        1.0,
-        1.0
+        0.0
       ]
     },
     "clinical_esi_assignment": {
       "task_id": "clinical_esi_assignment",
-      "final_score": 0.65,
-      "passed": true,
+      "final_score": 0.5,
+      "passed": false,
       "reward_history": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.0,
         1.0,
         0.5,
         0.5,
-        0.5,
-        0.5,
-        0.5,
-        0.5,
-        1.0,
-        0.5,
-        1.0
+        0.5
       ]
     },
     "clinical_triage_note": {
@@ -410,10 +410,10 @@
         1.0,
         1.0,
         1.0,
+        1.0,
+        1.0,
+        1.0,
         0.0,
-        1.0,
-        1.0,
-        1.0,
         1.0,
         1.0,
         1.0
@@ -421,11 +421,11 @@
     },
     "pr_bug_identification": {
       "task_id": "pr_bug_identification",
-      "final_score": 0.6452380952380953,
-      "passed": true,
+      "final_score": 0.44523809523809527,
+      "passed": false,
       "reward_history": [
-        1.0,
         0.14285714285714285,
+        0.0,
         0.08333333333333333,
         1.0,
         1.0
