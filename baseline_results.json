@@ -234,7 +234,7 @@
     "queue_management": {
       "task_id": "queue_management",
       "episode_id": "307e69ee-b347-464b-bf84-e3b03302066e",
-      "final_score": 1.0,
+      "final_score": 0.9999,
       "passed": true,
       "metrics": {
         "total_tickets": 20,
@@ -296,7 +296,7 @@
     "multi_turn_conversation": {
       "task_id": "multi_turn_conversation",
       "episode_id": "fe6a76a0-a928-4a03-9adb-fd2892f4ee73",
-      "final_score": 1.0,
+      "final_score": 0.9999,
       "passed": true,
       "metrics": {
         "turns_survived": 4,
@@ -346,7 +346,7 @@
     },
     "legal_clause_redlining": {
       "task_id": "legal_clause_redlining",
-      "final_score": 1.0,
+      "final_score": 0.9999,
       "passed": true,
       "reward_history": [
         1.0,
@@ -392,7 +392,7 @@
     },
     "clinical_triage_note": {
       "task_id": "clinical_triage_note",
-      "final_score": 1.0,
+      "final_score": 0.9999,
       "passed": true,
       "reward_history": [
         1.0,
@@ -433,7 +433,7 @@
     },
     "pr_review_comment": {
       "task_id": "pr_review_comment",
-      "final_score": 1.0,
+      "final_score": 0.9999,
       "passed": true,
       "reward_history": [
         1.0,

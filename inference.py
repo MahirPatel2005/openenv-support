@@ -324,7 +324,8 @@ async def main():
             results[task_id] = {"final_score":0.0001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
             print(f"[END] task={task_id} score=0.0000 steps=0", flush=True)
     scores = [r["final_score"] for r in results.values()]
-    overall = sum(scores)/len(scores) if scores else 0.0
+    raw_overall = sum(scores)/len(scores) if scores else 0.0001
+    overall = max(0.0001, min(0.9999, float(raw_overall)))
     print(f"\n{'='*60}\nBASELINE SUMMARY\n{'='*60}")
     for tid, r in results.items():
         mark = "✓ PASS" if r.get("passed") else "✗ FAIL"
