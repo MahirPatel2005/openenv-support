@@ -292,6 +292,9 @@ async def grader(task_id: Optional[str] = None) -> Dict[str, Any]:
         result["metrics"]["trajectory_bonus"] = traj_bonus
         result["metrics"]["consistency_penalty"] = cons_penalty
 
+    # FORCE clamp — validator requires strictly (0, 1) exclusive
+    result["final_score"] = max(0.0001, min(0.9999, float(result["final_score"])))
+    
     return result
 
 
@@ -299,7 +302,14 @@ async def grader(task_id: Optional[str] = None) -> Dict[str, Any]:
 async def baseline() -> Dict[str, Any]:
     """Run heuristic baseline agent across all tasks. No API key needed."""
     from graders.baseline_agent import run_baseline_all_tasks
-    return await run_baseline_all_tasks()
+    results = await run_baseline_all_tasks()
+    # Clamp all task scores
+    for tid in results.get("tasks", {}):
+        s = results["tasks"][tid].get("final_score", 0.5)
+        results["tasks"][tid]["final_score"] = max(0.0001, min(0.9999, float(s)))
+    overall = results.get("overall_score", 0.5)
+    results["overall_score"] = max(0.0001, min(0.9999, float(overall)))
+    return results
 
 
 @app.get("/health")
