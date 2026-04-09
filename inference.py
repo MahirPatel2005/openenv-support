@@ -285,23 +285,43 @@ async def main():
     args = parser.parse_args()
     if not HF_TOKEN:
         print("WARNING: No API key. Running heuristic baseline.", file=sys.stderr)
-        import httpx as _httpx
-        async def _run_heuristic():
-            async with _httpx.AsyncClient(base_url=OPENENV_URL, timeout=30.0) as http:
-                r = await http.post("/baseline")
-                r.raise_for_status()
-                data = r.json()
+        import urllib.request
+
+        def _sync_post(path):
+            req = urllib.request.Request(
+                OPENENV_URL + path, data=b"{}",
+                headers={"Content-Type": "application/json"}, method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read())
+
+        try:
+            data = _sync_post("/baseline")
+            tasks = data.get("tasks", {})
+            overall = float(data.get("overall_score", 0.5))
+
+            # Clamp all scores strictly within (0, 1)
+            for tid in tasks:
+                s = float(tasks[tid].get("final_score", 0.5))
+                tasks[tid]["final_score"] = max(0.0001, min(0.9999, s))
+            overall = max(0.0001, min(0.9999, overall))
+            data["overall_score"] = overall
+
             print(f"\n{'='*60}\nHEURISTIC BASELINE\n{'='*60}")
-            for tid, result in data.get("tasks", {}).items():
-                mark = "✓ PASS" if result.get("passed") else "✗ FAIL"
-                print(f"  {tid:<38} {result['final_score']:.4f}  {mark}")
-            overall = data.get("overall_score", 0)
+            for tid, r in tasks.items():
+                mark = "✓ PASS" if r.get("passed") else "✗ FAIL"
+                print(f"  {tid:<38} {r['final_score']:.4f}  {mark}")
             print(f"  {'OVERALL':<38} {overall:.4f}")
+
             with open("baseline_results.json", "w") as f:
                 json.dump(data, f, indent=2)
             print("\n  Results saved to baseline_results.json")
-        asyncio.run(_run_heuristic())
-        return
+
+        except Exception as e:
+            print(f"ERROR connecting to server: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        sys.exit(0)
     client = OpenAI(api_key=HF_TOKEN, base_url=args.base_url)
     all_tasks = ["ticket_classification","response_drafting","queue_management","multi_turn_conversation","legal_clause_identification","legal_risk_flagging","legal_clause_redlining","clinical_triage_classification","clinical_esi_assignment","clinical_triage_note","pr_type_classification","pr_bug_identification","pr_review_comment"]
     tasks_to_run = all_tasks if args.task=="all" else [args.task]
@@ -323,6 +343,11 @@ async def main():
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
             results[task_id] = {"final_score":0.0001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
             print(f"[END] task={task_id} score=0.0000 steps=0", flush=True)
+    # Clamp all individual task scores
+    for tid in results:
+        s = float(results[tid].get("final_score", 0.0001))
+        results[tid]["final_score"] = max(0.0001, min(0.9999, s))
+
     scores = [r["final_score"] for r in results.values()]
     raw_overall = sum(scores)/len(scores) if scores else 0.0001
     overall = max(0.0001, min(0.9999, float(raw_overall)))
