@@ -19,54 +19,67 @@ tasks:
   - id: ticket_classification
     name: Ticket Classification & Routing
     difficulty: easy
+    score_range: [0.001, 0.999]
     domain: customer_support
   - id: response_drafting
     name: Response Drafting & Quality
     difficulty: medium
+    score_range: [0.001, 0.999]
     domain: customer_support
   - id: queue_management
     name: SLA Queue Management
     difficulty: hard
+    score_range: [0.001, 0.999]
     domain: customer_support
   - id: multi_turn_conversation
     name: Multi-Turn De-escalation
     difficulty: very_hard
+    score_range: [0.001, 0.999]
     domain: customer_support
   - id: legal_clause_identification
     name: Legal Clause Identification
     difficulty: easy
+    score_range: [0.001, 0.999]
     domain: legal
   - id: legal_risk_flagging
     name: Legal Risk Flagging
     difficulty: medium
+    score_range: [0.001, 0.999]
     domain: legal
   - id: legal_clause_redlining
     name: Legal Clause Redlining
     difficulty: hard
+    score_range: [0.001, 0.999]
     domain: legal
   - id: clinical_triage_classification
     name: Clinical Triage Body System
     difficulty: easy
+    score_range: [0.001, 0.999]
     domain: clinical
   - id: clinical_esi_assignment
     name: Clinical ESI Assignment
     difficulty: medium
+    score_range: [0.001, 0.999]
     domain: clinical
   - id: clinical_triage_note
     name: Clinical Triage Note Generation
     difficulty: hard
+    score_range: [0.001, 0.999]
     domain: clinical
   - id: pr_type_classification
     name: PR Type Classification
     difficulty: easy
+    score_range: [0.001, 0.999]
     domain: engineering
   - id: pr_bug_identification
     name: PR Bug Identification
     difficulty: medium
+    score_range: [0.001, 0.999]
     domain: engineering
   - id: pr_review_comment
     name: PR Code Review
     difficulty: hard
+    score_range: [0.001, 0.999]
     domain: engineering
 endpoints:
   reset: POST /reset

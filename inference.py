@@ -270,7 +270,7 @@ async def run_task(client: OpenAI, task_id: str) -> dict:
                 print(f"  [step {step:02d}] Error: {e}", file=sys.stderr); break
             obs = result["observation"]
             rewards.append(result["reward"]["total"])
-            print(f"[STEP] step={step} reward={result['reward']['total']:.3f}", flush=True)
+            print(f"[STEP] step={step} action={action_dict.get('action_type','no_op')} reward={result['reward']['total']:.2f} done={str(obs.get('episode_done', False)).lower()} error=null", flush=True)
         r = await http.post("/grader", params={"task_id": task_id})
         r.raise_for_status()
         score = r.json(); score["reward_history"] = rewards
@@ -330,19 +330,22 @@ async def main():
     for i, task_id in enumerate(tasks_to_run):
         if i > 0 and args.pause > 0:
             time.sleep(args.pause)
-        print(f"[START] task={task_id}", flush=True)
+        print(f"[START] task={task_id} env=multi-domain-ai-agent model={MODEL_NAME}", flush=True)
         try:
             result = await run_task(client, task_id)
             results[task_id] = result
             status = "✓ PASS" if result["passed"] else "✗ FAIL"
-            print(f"[END] task={task_id} score={result['final_score']:.4f} steps={len(results[task_id].get('reward_history', []))}", flush=True)
+            rewards_str = ",".join(f"{r:.2f}" for r in result.get("reward_history", []))
+            success_val = str(result.get("passed", False)).lower()
+            steps_val = len(result.get("reward_history", []))
+            print(f"[END] success={success_val} steps={steps_val} score={result['final_score']:.3f} rewards={rewards_str or '0.00'}", flush=True)
             metrics = {k:v for k,v in result.get("metrics",{}).items() if not isinstance(v,list) and k!="per_ticket_scores"}
             if metrics: print(f"    Metrics: {json.dumps(metrics, indent=2)}")
         except Exception as e:
             import traceback
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
             results[task_id] = {"final_score":0.0001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
-            print(f"[END] task={task_id} score=0.0000 steps=0", flush=True)
+            print(f"[END] success=false steps=0 score=0.001 rewards=0.00", flush=True)
     # Clamp all individual task scores
     for tid in results:
         s = float(results[tid].get("final_score", 0.0001))
