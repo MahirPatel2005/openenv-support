@@ -287,13 +287,13 @@ async def grader(task_id: Optional[str] = None) -> Dict[str, Any]:
             cons_penalty = -0.05 if std > 0.4 else 0.0
         except Exception:
             cons_penalty = 0.0
-        result["final_score"] = max(0.0001, min(0.9999, result["final_score"] + traj_bonus + cons_penalty))
+        result["final_score"] = max(0.001, min(0.999, result["final_score"] + traj_bonus + cons_penalty))
         result.setdefault("metrics", {})
         result["metrics"]["trajectory_bonus"] = traj_bonus
         result["metrics"]["consistency_penalty"] = cons_penalty
 
     # FORCE clamp — validator requires strictly (0, 1) exclusive
-    result["final_score"] = max(0.0001, min(0.9999, float(result["final_score"])))
+    result["final_score"] = max(0.001, min(0.999, float(result["final_score"])))
     
     return result
 
@@ -306,9 +306,9 @@ async def baseline() -> Dict[str, Any]:
     # Clamp all task scores
     for tid in results.get("tasks", {}):
         s = results["tasks"][tid].get("final_score", 0.5)
-        results["tasks"][tid]["final_score"] = max(0.0001, min(0.9999, float(s)))
+        results["tasks"][tid]["final_score"] = max(0.001, min(0.999, float(s)))
     overall = results.get("overall_score", 0.5)
-    results["overall_score"] = max(0.0001, min(0.9999, float(overall)))
+    results["overall_score"] = max(0.001, min(0.999, float(overall)))
     return results
 
 

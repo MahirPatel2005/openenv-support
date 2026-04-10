@@ -38,7 +38,7 @@ class ClinicalTriageTask:
     
     def grader_score(self):
         total = sum(r["score"] for r in self.results) / len(self.results) if self.results else 0.0
-        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, total)), "passed": total >= 0.7}
+        return {"task_id": self.TASK_ID, "final_score": max(0.001, min(0.999, total)), "passed": total >= 0.7}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.patients):
@@ -77,7 +77,7 @@ class ClinicalESITask:
     
     def grader_score(self):
         total = sum(r["score"] for r in self.results) / len(self.results) if self.results else 0.0
-        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, round(total, 4))), "passed": total >= 0.6}
+        return {"task_id": self.TASK_ID, "final_score": max(0.001, min(0.999, round(total, 4))), "passed": total >= 0.6}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.patients):
@@ -123,7 +123,7 @@ class ClinicalNoteTask:
     
     def grader_score(self):
         total = sum(r["score"] for r in self.results) / len(self.results) if self.results else 0.0
-        return {"task_id": self.TASK_ID, "final_score": max(0.0001, min(0.9999, total)), "passed": total >= 0.6}
+        return {"task_id": self.TASK_ID, "final_score": max(0.001, min(0.999, total)), "passed": total >= 0.6}
 
     def _make_obs(self, done=False):
         if done or self.current_idx >= len(self.patients):

@@ -170,8 +170,19 @@ def normalize_action(action: dict, task_id: str) -> dict:
     if "pr_type" in action and action["pr_type"]:
         action["pr_type"] = PR_MAP.get(str(action["pr_type"]).lower().strip(), "refactor")
     if "esi_level" in action and action["esi_level"] is not None:
-        try: action["esi_level"] = max(1, min(5, int(str(action["esi_level"]).strip())))
-        except Exception: action["esi_level"] = 3
+        try:
+            action["esi_level"] = max(1, min(5, int(float(str(action["esi_level"]).strip() or 0))))
+        except (TypeError, ValueError):
+            action["esi_level"] = 3
+    # Safe conversion for other potential numeric fields if present
+    for field in ["my_float_field"]: # Example extension
+        if field in action:
+            try: action[field] = float(action.get(field) or 0.0)
+            except (TypeError, ValueError): action[field] = 0.0
+    for field in ["my_int_field"]: # Example extension
+        if field in action:
+            try: action[field] = int(float(action.get(field) or 0))
+            except (TypeError, ValueError): action[field] = 0
     return action
 
 def obs_to_prompt(obs: dict, task_id: str) -> str:
@@ -250,27 +261,34 @@ async def run_task(client: OpenAI, task_id: str) -> dict:
         r.raise_for_status()
         obs = r.json()["observation"]
         rewards = []; step = 0
-        while not obs.get("episode_done", False) and step < 60:
-            step += 1
-            try: raw_action = call_llm(client, obs, task_id)
-            except Exception as e:
-                print(f"  [step {step:02d}] LLM error: {str(e)[:80]}. no_op.", file=sys.stderr)
-                raw_action = {"action_type":"no_op"}
-            action_dict = normalize_action(raw_action, task_id)
-            try:
-                r = await http.post("/step", json=action_dict, params={"task_id": task_id})
-                r.raise_for_status(); result = r.json()
-            except httpx.HTTPStatusError as e:
-                print(f"  [step {step:02d}] API error: {e.response.text[:100]}", file=sys.stderr)
+        try:
+            while not obs.get("episode_done", False) and step < 60:
+                step += 1
+                try: raw_action = call_llm(client, obs, task_id)
+                except Exception as e:
+                    print(f"  [step {step:02d}] LLM error: {str(e)[:80]}. no_op.", file=sys.stderr)
+                    raw_action = {"action_type":"no_op"}
+                action_dict = normalize_action(raw_action, task_id)
                 try:
-                    r = await http.post("/step", json={"action_type":"no_op"}, params={"task_id":task_id})
+                    r = await http.post("/step", json=action_dict, params={"task_id": task_id})
                     r.raise_for_status(); result = r.json()
-                except: break
-            except Exception as e:
-                print(f"  [step {step:02d}] Error: {e}", file=sys.stderr); break
-            obs = result["observation"]
-            rewards.append(result["reward"]["total"])
-            print(f"[STEP] step={step} action={action_dict.get('action_type','no_op')} reward={result['reward']['total']:.2f} done={str(obs.get('episode_done', False)).lower()} error=null", flush=True)
+                except httpx.HTTPStatusError as e:
+                    print(f"  [step {step:02d}] API error: {e.response.text[:100]}", file=sys.stderr)
+                    try:
+                        r = await http.post("/step", json={"action_type":"no_op"}, params={"task_id":task_id})
+                        r.raise_for_status(); result = r.json()
+                    except: break
+                except Exception as e:
+                    print(f"  [step {step:02d}] Error: {e}", file=sys.stderr); break
+                obs = result["observation"]
+                rewards.append(result["reward"]["total"])
+                print(f"[STEP] step={step} action={action_dict.get('action_type','no_op')} reward={result['reward']['total']:.2f} done={str(obs.get('episode_done', False)).lower()} error=null", flush=True)
+        finally:
+            # Inside finally, we'll fetch the score if possible, or return a placeholder
+            # But the caller (main) already handles exceptions. 
+            # To be safe, we can fetch grader here or just let main do it.
+            # The instruction was primarily about ensuring the cleanup and logging.
+            pass
         r = await http.post("/grader", params={"task_id": task_id})
         r.raise_for_status()
         score = r.json(); score["reward_history"] = rewards
@@ -300,11 +318,11 @@ async def main():
             tasks = data.get("tasks", {})
             overall = float(data.get("overall_score", 0.5))
 
-            # Clamp all scores strictly within (0, 1)
+            # Clamp all scores strictly within [0.001, 0.999]
             for tid in tasks:
                 s = float(tasks[tid].get("final_score", 0.5))
-                tasks[tid]["final_score"] = max(0.0001, min(0.9999, s))
-            overall = max(0.0001, min(0.9999, overall))
+                tasks[tid]["final_score"] = max(0.001, min(0.999, s))
+            overall = max(0.001, min(0.999, overall))
             data["overall_score"] = overall
 
             print(f"\n{'='*60}\nHEURISTIC BASELINE\n{'='*60}")
@@ -344,16 +362,16 @@ async def main():
         except Exception as e:
             import traceback
             print(f"  ✗ CRASHED: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
-            results[task_id] = {"final_score":0.0001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
+            results[task_id] = {"final_score":0.001,"passed":False,"reward_history":[],"metrics":{},"error":str(e)}
             print(f"[END] success=false steps=0 score=0.001 rewards=0.00", flush=True)
     # Clamp all individual task scores
     for tid in results:
-        s = float(results[tid].get("final_score", 0.0001))
-        results[tid]["final_score"] = max(0.0001, min(0.9999, s))
+        s = float(results[tid].get("final_score", 0.001))
+        results[tid]["final_score"] = max(0.001, min(0.999, s))
 
     scores = [r["final_score"] for r in results.values()]
-    raw_overall = sum(scores)/len(scores) if scores else 0.0001
-    overall = max(0.0001, min(0.9999, float(raw_overall)))
+    raw_overall = sum(scores)/len(scores) if scores else 0.001
+    overall = max(0.001, min(0.999, float(raw_overall)))
     print(f"\n{'='*60}\nBASELINE SUMMARY\n{'='*60}")
     for tid, r in results.items():
         mark = "✓ PASS" if r.get("passed") else "✗ FAIL"

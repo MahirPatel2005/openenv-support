@@ -424,7 +424,7 @@ async def run_baseline_all_tasks() -> Dict[str, Any]:
         try:
             results[tid] = await runner()
         except Exception as e:
-            results[tid] = {"final_score": 0.0001, "passed": False, "error": str(e)}
+            results[tid] = {"final_score": 0.001, "passed": False, "error": str(e)}
 
     overall = sum(r["final_score"] for r in results.values()) / len(results)
     return {
